@@ -1,67 +1,40 @@
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
+const express = require('express')
+const helmet = require('helmet')
+const morgan = require('morgan')
+const cookieParser = require('cookie-parser')
 
-const authRoutes = require("./routes/auth.routes");
-const groupRoutes = require("./routes/group.routes");
-const expenseRoutes = require("./routes/expense.routes");
-const settlementRoutes = require("./routes/settlement.routes");
-const errorHandler = require("./middleware/error.middleware");
+const app = express()
 
-const app = express();
+app.set('trust proxy', 1)
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'https://splitora-tawny.vercel.app',
-  process.env.ALLOWED_ORIGINS
-].filter(Boolean)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH')
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200)
+  }
+  next()
+})
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === "development",
-});
+app.use(helmet({ crossOriginResourcePolicy: false }))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 
-app.use(helmet());
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)
-    }
-    return callback(new Error('Not allowed by CORS'))
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}))
-app.options('*', cors())
-app.use(limiter);
-app.use(express.json());
-
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
 }
 
-app.use("/api/auth", authRoutes);
-app.use("/api/groups", groupRoutes);
-app.use("/api/expenses", expenseRoutes);
-app.use("/api/settlements", settlementRoutes);
+app.use('/api/auth', require('./routes/auth.routes'))
+app.use('/api/groups', require('./routes/group.routes'))
+app.use('/api/expenses', require('./routes/expense.routes'))
+app.use('/api/settlements', require('./routes/settlement.routes'))
 
-app.get("/api/health", (_req, res) => {
-  return res.status(200).json({
-    status: "OK",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
-});
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date(), uptime: process.uptime() })
+})
 
-app.use(errorHandler);
+app.use(require('./middleware/error.middleware'))
 
-module.exports = app;
-module.exports.default = app;
+module.exports = app
