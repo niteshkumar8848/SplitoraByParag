@@ -225,12 +225,74 @@ const getMe = async (req, res, next) => {
   }
 };
 
+const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.userId;
+    if (!userId) return ApiResponse.error(res, "Unauthorized", 401);
+
+    const { name, avatar } = req.body;
+    const data = {};
+    if (name) data.name = String(name).trim();
+    if (avatar) data.avatar = avatar;
+
+    if (!Object.keys(data).length)
+      return ApiResponse.error(res, "Nothing to update", 400);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return ApiResponse.success(res, { user }, "Profile updated successfully");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.userId;
+    if (!userId) return ApiResponse.error(res, "Unauthorized", 401);
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword)
+      return ApiResponse.error(res, "Current and new password are required", 400);
+
+    if (newPassword.length < 6)
+      return ApiResponse.error(res, "New password must be at least 6 characters", 400);
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return ApiResponse.error(res, "User not found", 404);
+
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid)
+      return ApiResponse.error(res, "Current password is incorrect", 400);
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+    return ApiResponse.success(res, null, "Password changed successfully");
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   refreshToken,
   logout,
   getMe,
+  updateProfile,
+  changePassword,
 };
 module.exports.default = {
   register,
