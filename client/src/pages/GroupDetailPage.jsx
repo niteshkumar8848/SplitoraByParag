@@ -9,6 +9,7 @@ import Badge from "../components/ui/Badge";
 import Avatar from "../components/ui/Avatar";
 import Button from "../components/ui/Button";
 import ExpenseCard from "../components/expenses/ExpenseCard";
+import AddExpenseModal from "../components/expenses/AddExpenseModal";
 import SettlementSuggestions from "../components/settlements/SettlementSuggestions";
 import AddMemberModal from "../components/groups/AddMemberModal";
 
@@ -26,6 +27,7 @@ export default function GroupDetailPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("expenses");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["group", id],
@@ -46,13 +48,18 @@ export default function GroupDetailPage() {
     },
   });
 
-  const group = data?.data?.group;
-
+  const group = data?.data?.group || data?.group;
   const balances = useMemo(() => group?.balances || [], [group]);
   const expenses = useMemo(() => group?.expenses || [], [group]);
+  const members = useMemo(() => group?.members || [], [group]);
 
   if (isLoading) {
-    return <div className="h-48 animate-pulse rounded-2xl bg-surface-200" />;
+    return (
+      <div className="space-y-4">
+        <div className="h-32 animate-pulse rounded-2xl bg-surface-200" />
+        <div className="h-64 animate-pulse rounded-2xl bg-surface-200" />
+      </div>
+    );
   }
 
   if (!group) {
@@ -72,18 +79,30 @@ export default function GroupDetailPage() {
               <h1 className="text-2xl font-bold text-surface-900">{group.name}</h1>
               <Badge variant="info">{group.category}</Badge>
             </div>
-            {group.description ? <p className="mt-2 text-sm text-surface-600">{group.description}</p> : null}
-
+            {group.description ? (
+              <p className="mt-2 text-sm text-surface-600">{group.description}</p>
+            ) : null}
             <div className="mt-4 flex items-center gap-2">
-              {group.members?.map((member) => (
-                <Avatar key={member.id} user={member.user} size="sm" />
+              {members.map((member) => (
+                <Avatar key={member.userId || member.id} user={member.user || member} size="sm" />
               ))}
             </div>
           </div>
-
-          <Button leftIcon={<Plus size={16} />} onClick={() => setIsAddMemberOpen(true)}>
-            Add Member
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              leftIcon={<Plus size={16} />}
+              onClick={() => setIsAddMemberOpen(true)}
+            >
+              Add Member
+            </Button>
+            <Button
+              leftIcon={<Plus size={16} />}
+              onClick={() => setIsAddExpenseOpen(true)}
+            >
+              Add Expense
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -100,29 +119,30 @@ export default function GroupDetailPage() {
         ))}
       </div>
 
-      {activeTab === "expenses" ? (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" leftIcon={<Plus size={16} />} onClick={() => toast("Add expense flow coming next") }>
-              Add Expense
-            </Button>
-          </div>
-
+      {activeTab === "expenses" && (
+        <div className="space-y-3">
           {expenses.length ? (
-            <div className="space-y-3">
-              {expenses.map((expense) => (
-                <ExpenseCard key={expense.id} expense={expense} />
-              ))}
-            </div>
+            expenses.map((expense) => (
+              <ExpenseCard key={expense.id} expense={expense} />
+            ))
           ) : (
             <Card>
-              <p className="text-sm text-surface-600">No expenses added yet.</p>
+              <div className="py-8 text-center">
+                <p className="text-sm text-surface-600">No expenses added yet.</p>
+                <Button
+                  className="mt-3"
+                  leftIcon={<Plus size={16} />}
+                  onClick={() => setIsAddExpenseOpen(true)}
+                >
+                  Add First Expense
+                </Button>
+              </div>
             </Card>
           )}
         </div>
-      ) : null}
+      )}
 
-      {activeTab === "balances" ? (
+      {activeTab === "balances" && (
         <Card>
           <h2 className="mb-4 text-lg font-semibold text-surface-900">Member balances</h2>
           <div className="space-y-2">
@@ -141,29 +161,42 @@ export default function GroupDetailPage() {
                       entry.balance >= 0 ? "text-success-600" : "text-danger-600"
                     }`}
                   >
+                    {entry.balance >= 0 ? "+" : ""}
                     {formatCurrency(entry.balance)}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-surface-600">No balances available yet.</p>
+              <p className="text-sm text-surface-600">No balances yet. Add some expenses first.</p>
             )}
           </div>
         </Card>
-      ) : null}
+      )}
 
-      {activeTab === "settlements" ? (
+      {activeTab === "settlements" && (
         <Card>
           <h2 className="mb-4 text-lg font-semibold text-surface-900">Settlement suggestions</h2>
           <SettlementSuggestions groupId={id} />
         </Card>
-      ) : null}
+      )}
 
       <AddMemberModal
         isOpen={isAddMemberOpen}
         onClose={() => setIsAddMemberOpen(false)}
         onSubmit={(email) => addMemberMutation.mutateAsync(email)}
         loading={addMemberMutation.isPending}
+      />
+
+      <AddExpenseModal
+        isOpen={isAddExpenseOpen}
+        onClose={() => setIsAddExpenseOpen(false)}
+        groupId={id}
+        members={members}
+        onCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ["group", id] });
+          queryClient.invalidateQueries({ queryKey: ["groups"] });
+          setIsAddExpenseOpen(false);
+        }}
       />
     </div>
   );

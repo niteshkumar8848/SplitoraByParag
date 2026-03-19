@@ -21,24 +21,28 @@ export function useGroupSettlements(groupId) {
   });
 }
 
-export function useConfirmSettlement() {
+export function useConfirmSettlement(groupId) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: confirmSettlement,
-    onSuccess: (_, settlementId, context) => {
-      const groupId = context?.groupId;
-
-      if (groupId) {
-        queryClient.invalidateQueries({ queryKey: ["settlement-suggestions", groupId] });
-        queryClient.invalidateQueries({ queryKey: ["settlements", groupId] });
-        return;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["settlement-suggestions"] });
-      queryClient.invalidateQueries({ queryKey: ["settlements"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settlement-suggestions", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["settlements", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
     },
   });
 }
 
-export default useSettlementSuggestions;
+export default function useSettlements({ groupId } = {}) {
+  const suggestionsQuery = useSettlementSuggestions(groupId);
+  const settlementsQuery = useGroupSettlements(groupId);
+  const confirmSettlementMutation = useConfirmSettlement(groupId);
+
+  return {
+    suggestionsQuery,
+    settlementsQuery,
+    confirmSettlementMutation,
+  };
+}
