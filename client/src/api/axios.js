@@ -2,9 +2,10 @@ import axios from "axios";
 
 const ACCESS_TOKEN_KEY = "splitora_token";
 const REFRESH_TOKEN_KEY = "splitora_refresh_token";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const api = axios.create({
-  baseURL: 'https://splitora-api.onrender.com/api',
+  baseURL: API_BASE_URL,
   withCredentials: false,
   timeout: 60000,
   headers: {
@@ -77,7 +78,7 @@ api.interceptors.response.use(
         throw new Error("Missing refresh token");
       }
 
-      const refreshResponse = await axios.post("/api/auth/refresh", {
+      const refreshResponse = await api.post("/auth/refresh", {
         refreshToken,
       });
 

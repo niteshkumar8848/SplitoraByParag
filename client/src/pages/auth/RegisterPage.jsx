@@ -54,7 +54,11 @@ export default function RegisterPage() {
       const validationMessage = Array.isArray(responseData?.errors)
         ? responseData.errors.find((item) => item?.msg)?.msg
         : null;
+      const isNetworkError = !error?.response && error?.message === "Network Error";
       const message =
+        (isNetworkError
+          ? "Unable to reach the server. Please check that API is running and API base URL is configured correctly."
+          : null) ||
         validationMessage ||
         responseData?.message ||
         error?.message ||
