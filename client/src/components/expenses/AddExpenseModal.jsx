@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
@@ -14,8 +14,21 @@ const toNumber = (value) => {
 };
 
 const toFixedNumber = (value) => Number(toNumber(value).toFixed(2));
-const getMemberId = (member) => member?.user?.id || member?.userId || member?.id;
-const getMemberName = (member) => member?.user?.name || member?.name || "Member";
+const getMemberId = (member) =>
+  member?.user?.id || member?.userId || member?.id;
+const getMemberName = (member) =>
+  member?.user?.name || member?.name || "Member";
+
+const defaultForm = () => ({
+  title: "",
+  amount: "",
+  category: "general",
+  date: new Date().toISOString().slice(0, 10),
+  paidById: "",
+  splitType: "equal",
+  selectedMemberIds: [],
+  splits: {},
+});
 
 export default function AddExpenseModal({
   isOpen,
@@ -25,16 +38,7 @@ export default function AddExpenseModal({
   onCreated,
 }) {
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    amount: "",
-    category: "general",
-    date: new Date().toISOString().slice(0, 10),
-    paidById: "",
-    splitType: "equal",
-    selectedMemberIds: [],
-    splits: {},
-  });
+  const [form, setForm] = useState(defaultForm());
 
   const normalizedMembers = useMemo(
     () =>
@@ -44,38 +48,40 @@ export default function AddExpenseModal({
           name: getMemberName(member),
           raw: member,
         }))
-        .filter((member) => Boolean(member.id)),
+        .filter((m) => Boolean(m.id)),
     [members]
   );
 
+  useEffect(() => {
+    if (isOpen && normalizedMembers.length) {
+      setForm((prev) => ({
+        ...prev,
+        selectedMemberIds: normalizedMembers.map((m) => m.id),
+        paidById: normalizedMembers[0]?.id || "",
+      }));
+    }
+  }, [isOpen, normalizedMembers]);
+
   const selectedMembers = useMemo(
-    () => normalizedMembers.filter((member) => form.selectedMemberIds.includes(member.id)),
+    () =>
+      normalizedMembers.filter((m) =>
+        form.selectedMemberIds.includes(m.id)
+      ),
     [form.selectedMemberIds, normalizedMembers]
   );
 
   const resetForm = () => {
-    setForm({
-      title: "",
-      amount: "",
-      category: "general",
-      date: new Date().toISOString().slice(0, 10),
-      paidById: "",
-      splitType: "equal",
-      selectedMemberIds: [],
-      splits: {},
-    });
+    setForm(defaultForm());
   };
 
   const handleToggleMember = (memberId) => {
     setForm((prev) => {
       const exists = prev.selectedMemberIds.includes(memberId);
-      const selectedMemberIds = exists
-        ? prev.selectedMemberIds.filter((id) => id !== memberId)
-        : [...prev.selectedMemberIds, memberId];
-
       return {
         ...prev,
-        selectedMemberIds,
+        selectedMemberIds: exists
+          ? prev.selectedMemberIds.filter((id) => id !== memberId)
+          : [...prev.selectedMemberIds, memberId],
       };
     });
   };
@@ -84,21 +90,11 @@ export default function AddExpenseModal({
     const title = form.title.trim();
     const amount = toFixedNumber(form.amount);
 
-    if (!title) {
-      throw new Error("Title is required");
-    }
-
-    if (amount <= 0) {
-      throw new Error("Amount must be greater than 0");
-    }
-
-    if (!form.paidById) {
-      throw new Error("Please select who paid");
-    }
-
-    if (!form.selectedMemberIds.length) {
+    if (!title) throw new Error("Title is required");
+    if (amount <= 0) throw new Error("Amount must be greater than 0");
+    if (!form.paidById) throw new Error("Please select who paid");
+    if (!form.selectedMemberIds.length)
       throw new Error("Please select at least one member to split among");
-    }
 
     const payload = {
       groupId,
@@ -120,12 +116,9 @@ export default function AddExpenseModal({
         userId,
         percentage: toFixedNumber(form.splits[userId]),
       }));
-
-      const totalPercentage = shares.reduce((sum, item) => sum + item.percentage, 0);
-      if (Math.abs(totalPercentage - 100) > 0.001) {
+      const totalPct = shares.reduce((s, x) => s + x.percentage, 0);
+      if (Math.abs(totalPct - 100) > 0.01)
         throw new Error("Percentage split must total 100%");
-      }
-
       payload.shares = shares;
       return payload;
     }
@@ -134,68 +127,82 @@ export default function AddExpenseModal({
       userId,
       amount: toFixedNumber(form.splits[userId]),
     }));
-
-    const totalCustom = toFixedNumber(shares.reduce((sum, item) => sum + item.amount, 0));
-    if (Math.abs(totalCustom - amount) > 0.001) {
+    const totalCustom = shares.reduce((s, x) => s + x.amount, 0);
+    if (Math.abs(totalCustom - amount) > 0.01)
       throw new Error("Custom split total must match expense amount");
-    }
-
     payload.shares = shares;
     return payload;
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     try {
       setSubmitting(true);
       const payload = validateAndBuildPayload();
       const response = await createExpense(payload);
-
-      toast.success("Expense created successfully");
-      onCreated?.(response?.data?.expense || response?.expense || null);
+      toast.success("Expense added successfully!");
+      onCreated?.(
+        response?.data?.expense || response?.expense || null
+      );
       resetForm();
       onClose?.();
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || "Failed to create expense");
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Failed to create expense"
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const selectedMemberObjects = selectedMembers.map((member) => member.raw);
+  const handleClose = () => {
+    resetForm();
+    onClose?.();
+  };
+
+  const selectedMemberObjects = selectedMembers.map((m) => m.raw);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Expense" size="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add Expense" size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input
             label="Title"
-            placeholder="Dinner at Fisherman's Wharf"
+            placeholder="Dinner at restaurant"
             value={form.title}
-            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, title: e.target.value }))
+            }
           />
 
           <Input
-            label="Amount"
+            label="Amount (₹)"
             type="number"
             min="0"
             step="0.01"
             placeholder="0.00"
             value={form.amount}
-            onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, amount: e.target.value }))
+            }
           />
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-surface-700">Category</label>
+            <label className="mb-1.5 block text-sm font-medium text-surface-700">
+              Category
+            </label>
             <select
               className="h-11 w-full rounded-xl border border-surface-300 bg-surface-50 px-3 text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-200"
               value={form.category}
-              onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, category: e.target.value }))
+              }
             >
-              {CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {category[0].toUpperCase() + category.slice(1)}
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat[0].toUpperCase() + cat.slice(1)}
                 </option>
               ))}
             </select>
@@ -205,17 +212,23 @@ export default function AddExpenseModal({
             label="Date"
             type="date"
             value={form.date}
-            onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, date: e.target.value }))
+            }
           />
 
           <div className="md:col-span-2">
-            <label className="mb-1.5 block text-sm font-medium text-surface-700">Paid by</label>
+            <label className="mb-1.5 block text-sm font-medium text-surface-700">
+              Paid by
+            </label>
             <select
               className="h-11 w-full rounded-xl border border-surface-300 bg-surface-50 px-3 text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-200"
               value={form.paidById}
-              onChange={(e) => setForm((prev) => ({ ...prev, paidById: e.target.value }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, paidById: e.target.value }))
+              }
             >
-              <option value="">Select member</option>
+              <option value="">Select who paid</option>
               {normalizedMembers.map((member) => (
                 <option key={member.id} value={member.id}>
                   {member.name}
@@ -226,18 +239,19 @@ export default function AddExpenseModal({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-surface-700">Split among</label>
+          <label className="mb-2 block text-sm font-medium text-surface-700">
+            Split among
+          </label>
           <div className="grid grid-cols-1 gap-2 rounded-2xl border border-surface-200 bg-surface-50 p-3 sm:grid-cols-2">
             {normalizedMembers.map((member) => {
               const checked = form.selectedMemberIds.includes(member.id);
-
               return (
                 <label
                   key={member.id}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
                     checked
                       ? "border-primary-300 bg-primary-50 text-primary-700"
-                      : "border-surface-200 bg-surface-50 text-surface-700"
+                      : "border-surface-200 bg-surface-50 text-surface-700 hover:bg-surface-100"
                   }`}
                 >
                   <input
@@ -255,19 +269,23 @@ export default function AddExpenseModal({
 
         <SplitTypeSelector
           splitType={form.splitType}
-          onChange={(nextType) => setForm((prev) => ({ ...prev, splitType: nextType }))}
+          onChange={(nextType) =>
+            setForm((prev) => ({ ...prev, splitType: nextType }))
+          }
           members={selectedMemberObjects}
           totalAmount={toNumber(form.amount)}
           splits={form.splits}
-          onSplitsChange={(nextSplits) => setForm((prev) => ({ ...prev, splits: nextSplits }))}
+          onSplitsChange={(nextSplits) =>
+            setForm((prev) => ({ ...prev, splits: nextSplits }))
+          }
         />
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button type="submit" loading={submitting}>
-            Create Expense
+            Add Expense
           </Button>
         </div>
       </form>

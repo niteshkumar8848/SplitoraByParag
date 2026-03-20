@@ -20,7 +20,9 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 2,
   }).format(value || 0);
 
-const SkeletonBlock = ({ className }) => <div className={`animate-pulse rounded-xl bg-surface-200 ${className}`} />;
+const SkeletonBlock = ({ className }) => (
+  <div className={`animate-pulse rounded-xl bg-surface-200 ${className}`} />
+);
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -29,9 +31,14 @@ export default function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard", user?.id],
     enabled: Boolean(user?.id),
+    staleTime: 30000,
     queryFn: async () => {
       const groupsResponse = await getMyGroups();
-      const groups = groupsResponse?.data?.groups || [];
+      const groups =
+        groupsResponse?.data?.groups ||
+        groupsResponse?.groups ||
+        (Array.isArray(groupsResponse?.data) ? groupsResponse.data : []) ||
+        [];
 
       const groupMap = groups.reduce((acc, group) => {
         acc[group.id] = group;
@@ -41,21 +48,25 @@ export default function DashboardPage() {
       const [expenseResponses, balanceResponses] = await Promise.all([
         Promise.all(
           groups.map((group) =>
-            getGroupExpenses(group.id, { page: 1, limit: 25 }).catch(() => ({ data: [] }))
+            getGroupExpenses(group.id, { page: 1, limit: 25 }).catch(() => null)
           )
         ),
         Promise.all(
           groups.map((group) =>
-            getSettlementSuggestions(group.id).catch(() => ({ data: { balances: {} } }))
+            getSettlementSuggestions(group.id).catch(() => null)
           )
         ),
       ]);
 
       const allExpenses = expenseResponses
         .flatMap((response) => {
-          if (Array.isArray(response?.data)) return response.data
-          if (Array.isArray(response)) return response
-          return []
+          if (!response) return [];
+          const d = response?.data;
+          if (Array.isArray(d)) return d;
+          if (Array.isArray(response)) return response;
+          if (d && typeof d === "object" && Array.isArray(d.expenses))
+            return d.expenses;
+          return [];
         })
         .map((expense) => ({
           ...expense,
@@ -69,14 +80,28 @@ export default function DashboardPage() {
 
       const now = new Date();
       const totalExpensesThisMonth = allExpenses
-        .filter((expense) => isSameMonth(new Date(expense.date || expense.createdAt), now))
+        .filter((expense) => {
+          try {
+            return isSameMonth(
+              new Date(expense.date || expense.createdAt),
+              now
+            );
+          } catch {
+            return false;
+          }
+        })
         .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
 
       let amountYouOwe = 0;
       let amountOwedToYou = 0;
 
       balanceResponses.forEach((response) => {
-        const rawBalance = response?.data?.balances?.[user.id] || 0;
+        if (!response) return;
+        const balances =
+          response?.data?.balances ||
+          response?.balances ||
+          {};
+        const rawBalance = balances[user.id] || 0;
         if (rawBalance < 0) {
           amountYouOwe += Math.abs(rawBalance);
         } else {
@@ -93,10 +118,11 @@ export default function DashboardPage() {
         .slice(0, 3)
         .map((group) => ({
           ...group,
-          recentActivity: `Updated ${format(new Date(group.updatedAt || group.createdAt), "dd MMM, yyyy")}`,
+          recentActivity: `Updated ${format(
+            new Date(group.updatedAt || group.createdAt),
+            "dd MMM, yyyy"
+          )}`,
         }));
-
-      const recentExpenses = allExpenses.slice(0, 5);
 
       return {
         totalGroups: groups.length,
@@ -104,7 +130,7 @@ export default function DashboardPage() {
         amountYouOwe,
         amountOwedToYou,
         recentGroups,
-        recentExpenses,
+        recentExpenses: allExpenses.slice(0, 5),
       };
     },
   });
@@ -127,12 +153,18 @@ export default function DashboardPage() {
             Here is a quick snapshot of your shared expenses and settlements.
           </p>
         </div>
-
         <div className="flex flex-wrap gap-2">
-          <Button leftIcon={<Plus size={16} />} onClick={() => navigate("/groups")}>
+          <Button
+            leftIcon={<Plus size={16} />}
+            onClick={() => navigate("/groups")}
+          >
             Create Group
           </Button>
-          <Button variant="outline" leftIcon={<ReceiptText size={16} />} onClick={() => navigate("/groups")}>
+          <Button
+            variant="outline"
+            leftIcon={<ReceiptText size={16} />}
+            onClick={() => navigate("/groups")}
+          >
             Add Expense
           </Button>
         </div>
@@ -150,25 +182,26 @@ export default function DashboardPage() {
           <>
             <Card>
               <div className="text-sm text-surface-600">Total groups</div>
-              <div className="mt-2 text-2xl font-bold text-surface-900">{data?.totalGroups || 0}</div>
+              <div className="mt-2 text-2xl font-bold text-surface-900">
+                {data?.totalGroups || 0}
+              </div>
             </Card>
-
             <Card>
-              <div className="text-sm text-surface-600">Total expenses this month</div>
+              <div className="text-sm text-surface-600">
+                Expenses this month
+              </div>
               <div className="mt-2 text-2xl font-bold text-surface-900">
                 {formatCurrency(data?.totalExpensesThisMonth || 0)}
               </div>
             </Card>
-
             <Card>
-              <div className="text-sm text-surface-600">Amount you owe</div>
+              <div className="text-sm text-surface-600">You owe</div>
               <div className="mt-2 text-2xl font-bold text-danger-600">
                 {formatCurrency(data?.amountYouOwe || 0)}
               </div>
             </Card>
-
             <Card>
-              <div className="text-sm text-surface-600">Amount owed to you</div>
+              <div className="text-sm text-surface-600">Owed to you</div>
               <div className="mt-2 text-2xl font-bold text-success-600">
                 {formatCurrency(data?.amountOwedToYou || 0)}
               </div>
@@ -180,33 +213,48 @@ export default function DashboardPage() {
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-surface-900">Recent groups</h2>
+            <h2 className="text-lg font-semibold text-surface-900">
+              Recent groups
+            </h2>
             <Badge variant="info" size="sm">
               Last 3
             </Badge>
           </div>
-
           <div className="space-y-3">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, idx) => (
                 <SkeletonBlock key={idx} className="h-24 w-full" />
               ))
             ) : data?.recentGroups?.length ? (
-              data.recentGroups.map((group) => <GroupCard key={group.id} {...group} />)
+              data.recentGroups.map((group) => (
+                <GroupCard key={group.id} {...group} />
+              ))
             ) : (
-              <p className="text-sm text-surface-600">No groups yet. Create your first one.</p>
+              <div className="rounded-xl border border-dashed border-surface-300 p-6 text-center">
+                <p className="text-sm text-surface-600">
+                  No groups yet.{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/groups")}
+                    className="font-medium text-primary-600 hover:underline"
+                  >
+                    Create your first one
+                  </button>
+                </p>
+              </div>
             )}
           </div>
         </Card>
 
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-surface-900">Recent expenses</h2>
+            <h2 className="text-lg font-semibold text-surface-900">
+              Recent expenses
+            </h2>
             <Badge variant="default" size="sm">
               Last 5
             </Badge>
           </div>
-
           <div className="space-y-3">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, idx) => (
@@ -221,11 +269,17 @@ export default function DashboardPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <Avatar user={expense.paidBy} size="sm" />
-                      <p className="truncate text-sm font-semibold text-surface-900">{expense.title}</p>
+                      <p className="truncate text-sm font-semibold text-surface-900">
+                        {expense.title}
+                      </p>
                     </div>
                     <p className="mt-1 text-xs text-surface-600">
-                      {expense.groupName} • Paid by {expense.paidBy?.name || "Unknown"} •{" "}
-                      {format(new Date(expense.date || expense.createdAt), "dd MMM yyyy")}
+                      {expense.groupName} • Paid by{" "}
+                      {expense.paidBy?.name || "Unknown"} •{" "}
+                      {format(
+                        new Date(expense.date || expense.createdAt),
+                        "dd MMM yyyy"
+                      )}
                     </p>
                   </div>
                   <div className="ml-3 flex items-center gap-1 text-sm font-semibold text-surface-800">
@@ -236,8 +290,13 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="rounded-xl border border-dashed border-surface-300 p-6 text-center">
-                <HandCoins className="mx-auto mb-2 text-surface-400" size={18} />
-                <p className="text-sm text-surface-600">No recent expenses found.</p>
+                <HandCoins
+                  className="mx-auto mb-2 text-surface-400"
+                  size={18}
+                />
+                <p className="text-sm text-surface-600">
+                  No recent expenses found.
+                </p>
               </div>
             )}
           </div>

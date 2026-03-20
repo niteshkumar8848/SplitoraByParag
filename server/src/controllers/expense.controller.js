@@ -25,15 +25,16 @@ const buildShares = ({ splitType, amount, memberIds, sharesInput }) => {
     if (!memberIds || !memberIds.length) {
       throw new Error("memberIds required for equal split");
     }
-    const share = Number((parsedAmount / memberIds.length).toFixed(2));
+    const count = memberIds.length;
+    const baseShare = Number((parsedAmount / count).toFixed(2));
+    let distributed = 0;
     const shares = memberIds.map((userId, index) => {
-      const isLast = index === memberIds.length - 1;
-      const total = shares ? shares.reduce((s, x) => s + x.amount, 0) : 0;
-      return {
-        userId,
-        amount: isLast ? Number((parsedAmount - total).toFixed(2)) : share,
-        percentage: null,
-      };
+      const isLast = index === count - 1;
+      const shareAmount = isLast
+        ? Number((parsedAmount - distributed).toFixed(2))
+        : baseShare;
+      distributed += baseShare;
+      return { userId, amount: shareAmount, percentage: null };
     });
     return { splitType: "equal", memberIds, shares };
   }
@@ -42,32 +43,50 @@ const buildShares = ({ splitType, amount, memberIds, sharesInput }) => {
     if (!sharesInput || !sharesInput.length) {
       throw new Error("shares required for percentage split");
     }
-    const totalPct = sharesInput.reduce((s, x) => s + Number(x.percentage || 0), 0);
+    const totalPct = sharesInput.reduce(
+      (s, x) => s + Number(x.percentage || 0),
+      0
+    );
     if (Math.abs(totalPct - 100) > 0.01) {
       throw new Error("Percentage shares must total 100%");
     }
     const shares = sharesInput.map((item) => ({
       userId: item.userId,
-      amount: Number(((Number(item.percentage) / 100) * parsedAmount).toFixed(2)),
+      amount: Number(
+        ((Number(item.percentage) / 100) * parsedAmount).toFixed(2)
+      ),
       percentage: Number(item.percentage),
     }));
-    return { splitType: "percentage", memberIds: shares.map((s) => s.userId), shares };
+    return {
+      splitType: "percentage",
+      memberIds: shares.map((s) => s.userId),
+      shares,
+    };
   }
 
   if (splitType === "custom") {
     if (!sharesInput || !sharesInput.length) {
       throw new Error("shares required for custom split");
     }
-    const total = sharesInput.reduce((s, x) => s + Number(x.amount || 0), 0);
+    const total = sharesInput.reduce(
+      (s, x) => s + Number(x.amount || 0),
+      0
+    );
     if (Math.abs(total - parsedAmount) > 0.01) {
-      throw new Error("Custom split amounts must equal total expense amount");
+      throw new Error(
+        "Custom split amounts must equal total expense amount"
+      );
     }
     const shares = sharesInput.map((item) => ({
       userId: item.userId,
       amount: Number(Number(item.amount).toFixed(2)),
       percentage: null,
     }));
-    return { splitType: "custom", memberIds: shares.map((s) => s.userId), shares };
+    return {
+      splitType: "custom",
+      memberIds: shares.map((s) => s.userId),
+      shares,
+    };
   }
 
   throw new Error(`Invalid split type: ${splitType}`);
@@ -92,12 +111,32 @@ const createExpense = async (req, res, next) => {
 
     if (!requesterId) return ApiResponse.error(res, "Unauthorized", 401);
     if (!groupId || !title || amount === undefined)
-      return ApiResponse.error(res, "groupId, title, and amount are required", 400);
+      return ApiResponse.error(
+        res,
+        "groupId, title, and amount are required",
+        400
+      );
 
     const membership = await getMembership(requesterId, groupId);
-    if (!membership) return ApiResponse.error(res, "Access denied: not a group member", 403);
+    if (!membership)
+      return ApiResponse.error(
+        res,
+        "Access denied: not a group member",
+        403
+      );
 
-    const split = buildShares({ splitType, amount, memberIds, sharesInput: shares });
+    let split;
+    try {
+      split = buildShares({
+        splitType,
+        amount,
+        memberIds,
+        sharesInput: shares,
+      });
+    } catch (err) {
+      return ApiResponse.error(res, err.message, 400);
+    }
+
     const payerId = paidById || requesterId;
 
     const usersAreMembers = await ensureMembersBelongToGroup(groupId, [
@@ -105,7 +144,11 @@ const createExpense = async (req, res, next) => {
       payerId,
     ]);
     if (!usersAreMembers)
-      return ApiResponse.error(res, "All members and payer must belong to the group", 400);
+      return ApiResponse.error(
+        res,
+        "All members and payer must belong to the group",
+        400
+      );
 
     const result = await prisma.$transaction(async (tx) => {
       const expense = await tx.expense.create({
@@ -134,17 +177,31 @@ const createExpense = async (req, res, next) => {
       return tx.expense.findUnique({
         where: { id: expense.id },
         include: {
-          paidBy: { select: { id: true, name: true, email: true, avatar: true } },
+          paidBy: {
+            select: { id: true, name: true, email: true, avatar: true },
+          },
           shares: {
             include: {
-              user: { select: { id: true, name: true, email: true, avatar: true } },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },
       });
     });
 
-    return ApiResponse.success(res, { expense: result }, "Expense created successfully", 201);
+    return ApiResponse.success(
+      res,
+      { expense: result },
+      "Expense created successfully",
+      201
+    );
   } catch (err) {
     return next(err);
   }
@@ -158,10 +215,18 @@ const getGroupExpenses = async (req, res, next) => {
     if (!requesterId) return ApiResponse.error(res, "Unauthorized", 401);
 
     const membership = await getMembership(requesterId, groupId);
-    if (!membership) return ApiResponse.error(res, "Access denied: not a group member", 403);
+    if (!membership)
+      return ApiResponse.error(
+        res,
+        "Access denied: not a group member",
+        403
+      );
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 25, 1), 100);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 25, 1),
+      100
+    );
     const skip = (page - 1) * limit;
 
     const [total, expenses] = await Promise.all([
@@ -169,10 +234,19 @@ const getGroupExpenses = async (req, res, next) => {
       prisma.expense.findMany({
         where: { groupId },
         include: {
-          paidBy: { select: { id: true, name: true, email: true, avatar: true } },
+          paidBy: {
+            select: { id: true, name: true, email: true, avatar: true },
+          },
           shares: {
             include: {
-              user: { select: { id: true, name: true, email: true, avatar: true } },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },
@@ -182,11 +256,7 @@ const getGroupExpenses = async (req, res, next) => {
       }),
     ]);
 
-    return ApiResponse.success(
-      res,
-      expenses,
-      "Expenses fetched successfully"
-    );
+    return ApiResponse.success(res, expenses, "Expenses fetched successfully");
   } catch (err) {
     return next(err);
   }
@@ -203,10 +273,14 @@ const getExpenseById = async (req, res, next) => {
       where: { id },
       include: {
         group: { select: { id: true, name: true, category: true } },
-        paidBy: { select: { id: true, name: true, email: true, avatar: true } },
+        paidBy: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
         shares: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatar: true } },
+            user: {
+              select: { id: true, name: true, email: true, avatar: true },
+            },
           },
         },
       },
@@ -215,9 +289,18 @@ const getExpenseById = async (req, res, next) => {
     if (!expense) return ApiResponse.error(res, "Expense not found", 404);
 
     const membership = await getMembership(requesterId, expense.groupId);
-    if (!membership) return ApiResponse.error(res, "Access denied: not a group member", 403);
+    if (!membership)
+      return ApiResponse.error(
+        res,
+        "Access denied: not a group member",
+        403
+      );
 
-    return ApiResponse.success(res, { expense }, "Expense fetched successfully");
+    return ApiResponse.success(
+      res,
+      { expense },
+      "Expense fetched successfully"
+    );
   } catch (err) {
     return next(err);
   }
@@ -235,19 +318,44 @@ const updateExpense = async (req, res, next) => {
       include: { shares: true },
     });
 
-    if (!existingExpense) return ApiResponse.error(res, "Expense not found", 404);
+    if (!existingExpense)
+      return ApiResponse.error(res, "Expense not found", 404);
 
-    const membership = await getMembership(requesterId, existingExpense.groupId);
-    if (!membership) return ApiResponse.error(res, "Access denied: not a group member", 403);
+    const membership = await getMembership(
+      requesterId,
+      existingExpense.groupId
+    );
+    if (!membership)
+      return ApiResponse.error(
+        res,
+        "Access denied: not a group member",
+        403
+      );
 
     const isAdmin = membership.role === "admin";
     const isCreator = existingExpense.paidById === requesterId;
     if (!isAdmin && !isCreator)
-      return ApiResponse.error(res, "Only expense creator or group admin can update", 403);
+      return ApiResponse.error(
+        res,
+        "Only expense creator or group admin can update",
+        403
+      );
 
-    const { title, amount, splitType, category, note, receiptUrl, date, paidById, memberIds, shares } = req.body;
+    const {
+      title,
+      amount,
+      splitType,
+      category,
+      note,
+      receiptUrl,
+      date,
+      paidById,
+      memberIds,
+      shares,
+    } = req.body;
 
-    const nextAmount = amount !== undefined ? Number(amount) : existingExpense.amount;
+    const nextAmount =
+      amount !== undefined ? Number(amount) : existingExpense.amount;
     const nextSplitType = splitType || existingExpense.splitType;
     const fallbackMemberIds = existingExpense.shares.map((s) => s.userId);
     const fallbackShares = existingExpense.shares.map((s) => ({
@@ -256,20 +364,29 @@ const updateExpense = async (req, res, next) => {
       percentage: s.percentage,
     }));
 
-    const split = buildShares({
-      splitType: nextSplitType,
-      amount: nextAmount,
-      memberIds: memberIds || fallbackMemberIds,
-      sharesInput: shares || fallbackShares,
-    });
+    let split;
+    try {
+      split = buildShares({
+        splitType: nextSplitType,
+        amount: nextAmount,
+        memberIds: memberIds || fallbackMemberIds,
+        sharesInput: shares || fallbackShares,
+      });
+    } catch (err) {
+      return ApiResponse.error(res, err.message, 400);
+    }
 
     const nextPayerId = paidById || existingExpense.paidById;
-    const usersAreMembers = await ensureMembersBelongToGroup(existingExpense.groupId, [
-      ...split.memberIds,
-      nextPayerId,
-    ]);
+    const usersAreMembers = await ensureMembersBelongToGroup(
+      existingExpense.groupId,
+      [...split.memberIds, nextPayerId]
+    );
     if (!usersAreMembers)
-      return ApiResponse.error(res, "All members and payer must belong to the group", 400);
+      return ApiResponse.error(
+        res,
+        "All members and payer must belong to the group",
+        400
+      );
 
     const updatedExpense = await prisma.$transaction(async (tx) => {
       await tx.expense.update({
@@ -278,10 +395,15 @@ const updateExpense = async (req, res, next) => {
           title: title !== undefined ? title : existingExpense.title,
           amount: nextAmount,
           splitType: split.splitType,
-          category: category !== undefined ? category : existingExpense.category,
+          category:
+            category !== undefined ? category : existingExpense.category,
           note: note !== undefined ? note : existingExpense.note,
-          receiptUrl: receiptUrl !== undefined ? receiptUrl : existingExpense.receiptUrl,
-          date: date !== undefined ? new Date(date) : existingExpense.date,
+          receiptUrl:
+            receiptUrl !== undefined
+              ? receiptUrl
+              : existingExpense.receiptUrl,
+          date:
+            date !== undefined ? new Date(date) : existingExpense.date,
           paidById: nextPayerId,
         },
       });
@@ -299,17 +421,30 @@ const updateExpense = async (req, res, next) => {
       return tx.expense.findUnique({
         where: { id },
         include: {
-          paidBy: { select: { id: true, name: true, email: true, avatar: true } },
+          paidBy: {
+            select: { id: true, name: true, email: true, avatar: true },
+          },
           shares: {
             include: {
-              user: { select: { id: true, name: true, email: true, avatar: true } },
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },
       });
     });
 
-    return ApiResponse.success(res, { expense: updatedExpense }, "Expense updated successfully");
+    return ApiResponse.success(
+      res,
+      { expense: updatedExpense },
+      "Expense updated successfully"
+    );
   } catch (err) {
     return next(err);
   }
@@ -330,12 +465,21 @@ const deleteExpense = async (req, res, next) => {
     if (!expense) return ApiResponse.error(res, "Expense not found", 404);
 
     const membership = await getMembership(requesterId, expense.groupId);
-    if (!membership) return ApiResponse.error(res, "Access denied: not a group member", 403);
+    if (!membership)
+      return ApiResponse.error(
+        res,
+        "Access denied: not a group member",
+        403
+      );
 
     const isAdmin = membership.role === "admin";
     const isCreator = expense.paidById === requesterId;
     if (!isAdmin && !isCreator)
-      return ApiResponse.error(res, "Only expense creator or group admin can delete", 403);
+      return ApiResponse.error(
+        res,
+        "Only expense creator or group admin can delete",
+        403
+      );
 
     await prisma.expense.delete({ where: { id } });
 
