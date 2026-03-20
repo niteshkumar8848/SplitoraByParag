@@ -19,13 +19,20 @@ export default function Input({
   return (
     <div className="w-full">
       {label ? (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-surface-700">
+        <label
+          htmlFor={inputId}
+          className="mb-1.5 block text-sm font-medium text-surface-700"
+        >
           {label}
         </label>
       ) : null}
 
       <div className="relative">
-        {leftIcon ? <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-surface-400">{leftIcon}</span> : null}
+        {leftIcon ? (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-surface-400">
+            {leftIcon}
+          </span>
+        ) : null}
 
         <input
           id={inputId}
@@ -45,11 +52,19 @@ export default function Input({
           {...props}
         />
 
-        {rightIcon ? <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-surface-400">{rightIcon}</span> : null}
+        {rightIcon ? (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400">
+            {rightIcon}
+          </span>
+        ) : null}
       </div>
 
-      {error ? <p className="mt-1.5 text-sm text-danger-600">{error}</p> : null}
-      {!error && helperText ? <p className="mt-1.5 text-sm text-surface-500">{helperText}</p> : null}
+      {error ? (
+        <p className="mt-1.5 text-sm text-danger-600">{error}</p>
+      ) : null}
+      {!error && helperText ? (
+        <p className="mt-1.5 text-sm text-surface-500">{helperText}</p>
+      ) : null}
     </div>
   );
 }
