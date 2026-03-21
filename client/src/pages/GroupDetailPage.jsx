@@ -16,8 +16,9 @@ import AddExpenseModal from '../components/expenses/AddExpenseModal'
 import SettlementSuggestions from '../components/settlements/SettlementSuggestions'
 import AddMemberModal from '../components/groups/AddMemberModal'
 import GroupAnalytics from '../components/analytics/GroupAnalytics'
+import GroupLedger from '../components/analytics/GroupLedger'
 
-const TABS = ['expenses', 'balances', 'settlements', 'analytics']
+const TABS = ['expenses', 'balances', 'settlements', 'analytics', 'ledger']
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('en-IN', {
@@ -191,6 +192,10 @@ export default function GroupDetailPage() {
 
       {activeTab === 'analytics' && (
         <GroupAnalytics expenses={expenses} members={members} balances={balances} />
+      )}
+
+      {activeTab === 'ledger' && (
+        <GroupLedger expenses={expenses} members={members} balances={balances} groupId={id} groupName={group.name} />
       )}
 
       {activeTab === 'expenses' && (
