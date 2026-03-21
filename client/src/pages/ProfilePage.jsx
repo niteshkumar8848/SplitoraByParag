@@ -12,7 +12,7 @@ import useAuthStore from "../store/authStore";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
-import Avatar from "../components/ui/Avatar";
+import AvatarUpload from "../components/ui/AvatarUpload";
 import Modal from "../components/ui/Modal";
 
 const profileSchema = z.object({
@@ -89,7 +89,7 @@ export default function ProfilePage() {
 
       <Card>
         <div className="flex items-center gap-4">
-          <Avatar user={user} size="lg" />
+          <AvatarUpload user={user} size="xl" />
           <div>
             <h2 className="text-lg font-semibold text-surface-900">
               {user?.name}

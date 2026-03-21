@@ -236,6 +236,52 @@ const changePassword = async (req, res, next) => {
   }
 }
 
+const uploadAvatar = async (req, res, next) => {
+  try {
+    const userId = req.user && req.user.userId
+    if (!userId) return ApiResponse.error(res, 'Unauthorized', 401)
+    if (!req.file) return ApiResponse.error(res, 'No file uploaded', 400)
+
+    const cloudinary = require('../config/cloudinary')
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'splitora/avatars',
+          public_id: `avatar_${userId}`,
+          overwrite: true,
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+            { quality: 'auto', fetch_format: 'auto' }
+          ]
+        },
+        (error, uploaded) => {
+          if (error) reject(error)
+          else resolve(uploaded)
+        }
+      )
+      stream.end(req.file.buffer)
+    })
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { avatar: result.secure_url },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    return ApiResponse.success(res, { user, avatarUrl: result.secure_url }, 'Avatar uploaded successfully')
+  } catch (error) {
+    return next(error)
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -243,5 +289,6 @@ module.exports = {
   logout,
   getMe,
   updateProfile,
-  changePassword
+  changePassword,
+  uploadAvatar
 }
