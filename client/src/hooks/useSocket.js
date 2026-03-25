@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { useQueryClient } from '@tanstack/react-query'
-
-const SOCKET_URL = 'https://splitora-api.onrender.com'
+import { API_ORIGIN as SOCKET_URL } from '../config/api'
 
 export default function useSocket(groupId) {
   const queryClient = useQueryClient()

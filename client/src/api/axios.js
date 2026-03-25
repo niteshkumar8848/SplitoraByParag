@@ -1,5 +1,5 @@
 import axios from 'axios'
-const BASE_URL = 'https://splitora-api.onrender.com/api'
+import { API_BASE_URL as BASE_URL } from '../config/api'
 const api = axios.create({ baseURL: BASE_URL, timeout: 60000, headers: { 'Content-Type': 'application/json' } })
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('splitora_token')
