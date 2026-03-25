@@ -145,14 +145,27 @@ export default function ProfilePage() {
         </Button>
       </Card>
 
-      <Card>
-        <h2 className="mb-3 text-base font-semibold text-danger-600">
-          Danger zone
-        </h2>
-        <Button variant="danger" onClick={logout}>
-          <LogOut size={16} />
-          Logout
-        </Button>
+      <Card className="border-danger-200/70">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-danger-600">
+              Danger zone
+            </h2>
+            <p className="mt-1 text-sm text-surface-600">
+              This will sign you out of your current session.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="danger"
+              onClick={logout}
+              leftIcon={<LogOut size={16} />}
+              className="w-full sm:w-auto"
+            >
+              Logout
+            </Button>
+          </div>
+        </div>
       </Card>
 
       <Modal
