@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -24,8 +24,10 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const googleButtonRef = useRef(null);
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const {
     register,
@@ -46,6 +48,82 @@ export default function LoginPage() {
       toast.error(message);
     }
   };
+
+  const handleGoogleResponse = useCallback(
+    async (response) => {
+      const idToken = response?.credential;
+      if (!idToken) {
+        toast.error("Google sign-in failed. Please try again.");
+        return;
+      }
+
+      try {
+        await loginWithGoogle(idToken);
+        navigate("/");
+      } catch (error) {
+        const message = error?.response?.data?.message || "Google login failed. Please try again.";
+        toast.error(message);
+      }
+    },
+    [loginWithGoogle, navigate]
+  );
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !googleButtonRef.current) {
+      return;
+    }
+
+    let isUnmounted = false;
+    const existingScript = document.querySelector('script[data-google-gsi="true"]');
+
+    const renderGoogleButton = () => {
+      if (isUnmounted || !window.google?.accounts?.id || !googleButtonRef.current) {
+        return;
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "pill",
+        width: 360,
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      renderGoogleButton();
+      return () => {
+        isUnmounted = true;
+      };
+    }
+
+    if (existingScript) {
+      existingScript.addEventListener("load", renderGoogleButton);
+      return () => {
+        isUnmounted = true;
+        existingScript.removeEventListener("load", renderGoogleButton);
+      };
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleGsi = "true";
+    script.onload = renderGoogleButton;
+    document.head.appendChild(script);
+
+    return () => {
+      isUnmounted = true;
+    };
+  }, [GOOGLE_CLIENT_ID, handleGoogleResponse]);
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
@@ -135,6 +213,17 @@ export default function LoginPage() {
               Log in
             </Button>
           </form>
+
+          {GOOGLE_CLIENT_ID ? (
+            <div className="mt-4">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="h-px flex-1 bg-surface-200" />
+                <span className="text-xs uppercase tracking-wide text-surface-500">or</span>
+                <div className="h-px flex-1 bg-surface-200" />
+              </div>
+              <div ref={googleButtonRef} className="flex justify-center" />
+            </div>
+          ) : null}
 
           <p className="mt-5 text-center text-sm text-surface-600">
             New to Splitora?{" "}

@@ -3,7 +3,7 @@ const { body } = require('express-validator')
 const { protect } = require('../middleware/auth.middleware')
 const upload = require('../middleware/upload.middleware')
 const validate = require('../middleware/validate.middleware')
-const { register, login, refreshToken, logout, getMe, updateProfile, changePassword, uploadAvatar } = require('../controllers/auth.controller')
+const { register, login, googleSignIn, refreshToken, logout, getMe, updateProfile, changePassword, uploadAvatar } = require('../controllers/auth.controller')
 const router = express.Router()
 
 router.post('/register',
@@ -16,6 +16,10 @@ router.post('/login',
   [body('email').isEmail().withMessage('Valid email is required'),
    body('password').notEmpty().withMessage('Password is required')],
   validate, login)
+
+router.post('/google',
+  [body('idToken').notEmpty().withMessage('Google ID token is required')],
+  validate, googleSignIn)
 
 router.post('/refresh', refreshToken)
 router.post('/logout', logout)

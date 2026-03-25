@@ -1,17 +1,39 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const { OAuth2Client } = require('google-auth-library')
 const prisma = require('../config/db')
 const ApiResponse = require('../utils/apiResponse')
 
 const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'
 const REFRESH_TOKEN_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000
+const GOOGLE_CLIENT_IDS = String(process.env.GOOGLE_CLIENT_ID || '')
+  .split(',')
+  .map((id) => id.trim())
+  .filter(Boolean)
+
+const googleClient = GOOGLE_CLIENT_IDS.length ? new OAuth2Client() : null
 
 const createAccessToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN })
 
 const createRefreshToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN })
+
+const issueTokens = async (userId) => {
+  const accessToken = createAccessToken(userId)
+  const refreshToken = createRefreshToken(userId)
+
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS)
+    }
+  })
+
+  return { accessToken, refreshToken }
+}
 
 const sanitizeUser = (user) => ({
   id: user.id,
@@ -52,16 +74,7 @@ const register = async (req, res, next) => {
       data: { name: normalizedName, email: normalizedEmail, passwordHash }
     })
 
-    const accessToken = createAccessToken(user.id)
-    const refreshToken = createRefreshToken(user.id)
-
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS)
-      }
-    })
+    const { accessToken, refreshToken } = await issueTokens(user.id)
 
     return ApiResponse.success(
       res,
@@ -78,14 +91,19 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body
+    const normalizedEmail = String(email || '').trim().toLowerCase()
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return ApiResponse.error(res, 'Email and password are required', 400)
     }
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
     if (!user) {
       return ApiResponse.error(res, 'Invalid email or password', 401)
+    }
+
+    if (!user.passwordHash) {
+      return ApiResponse.error(res, 'This account uses Google sign-in. Please continue with Google.', 400)
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
@@ -93,21 +111,76 @@ const login = async (req, res, next) => {
       return ApiResponse.error(res, 'Invalid email or password', 401)
     }
 
-    const accessToken = createAccessToken(user.id)
-    const refreshToken = createRefreshToken(user.id)
-
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS)
-      }
-    })
+    const { accessToken, refreshToken } = await issueTokens(user.id)
 
     return ApiResponse.success(
       res,
       { user: sanitizeUser(user), accessToken, refreshToken },
       'Login successful'
+    )
+  } catch (error) {
+    return next(error)
+  }
+}
+
+const googleSignIn = async (req, res, next) => {
+  try {
+    if (!googleClient || !GOOGLE_CLIENT_IDS.length) {
+      return ApiResponse.error(res, 'Google sign-in is not configured on server', 500)
+    }
+
+    const { idToken } = req.body
+    if (!idToken) {
+      return ApiResponse.error(res, 'Google ID token is required', 400)
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: GOOGLE_CLIENT_IDS
+    })
+
+    const payload = ticket.getPayload()
+    const email = String(payload?.email || '').trim().toLowerCase()
+    const name = String(payload?.name || '').trim()
+    const avatar = payload?.picture || null
+    const googleId = payload?.sub || null
+
+    if (!email || !name || !googleId) {
+      return ApiResponse.error(res, 'Invalid Google token payload', 400)
+    }
+
+    if (payload?.email_verified !== true) {
+      return ApiResponse.error(res, 'Google email is not verified', 400)
+    }
+
+    let user = await prisma.user.findUnique({ where: { email } })
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          avatar,
+          googleId,
+          authProvider: 'google',
+          passwordHash: null
+        }
+      })
+    } else if (user.googleId && user.googleId !== googleId) {
+      return ApiResponse.error(res, 'Google account mismatch for this email', 409)
+    } else if (!user.googleId) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { googleId, avatar: user.avatar || avatar }
+      })
+    }
+
+    const { accessToken, refreshToken } = await issueTokens(user.id)
+
+    return ApiResponse.success(
+      res,
+      { user: sanitizeUser(user), accessToken, refreshToken },
+      'Google sign-in successful'
     )
   } catch (error) {
     return next(error)
@@ -223,6 +296,7 @@ const changePassword = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return ApiResponse.error(res, 'User not found', 404)
+    if (!user.passwordHash) return ApiResponse.error(res, 'Password is not set for this account', 400)
 
     const isValid = await bcrypt.compare(currentPassword, user.passwordHash)
     if (!isValid) return ApiResponse.error(res, 'Current password is incorrect', 400)
@@ -285,6 +359,7 @@ const uploadAvatar = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  googleSignIn,
   refreshToken,
   logout,
   getMe,

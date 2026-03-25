@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { getMe, loginUser, logoutUser, registerUser } from "../api/auth.api";
+import { getMe, googleLoginUser, loginUser, logoutUser, registerUser } from "../api/auth.api";
 import useAuthStore from "../store/authStore";
 
 export const AuthContext = createContext(undefined);
@@ -72,6 +72,20 @@ export function AuthProvider({ children }) {
     [setAuth]
   );
 
+  const loginWithGoogle = useCallback(
+    async (idToken) => {
+      const response = await googleLoginUser({ idToken });
+      const nextUser = extractUser(response);
+      const { accessToken: nextAccessToken, refreshToken: nextRefreshToken } = extractTokens(response);
+
+      setAuth(nextUser, nextAccessToken, nextRefreshToken);
+      toast.success("Logged in with Google");
+
+      return nextUser;
+    },
+    [setAuth]
+  );
+
   const register = useCallback(
     async (data) => {
       const response = await registerUser(data);
@@ -104,12 +118,13 @@ export function AuthProvider({ children }) {
       isAuthenticated,
       isLoading,
       login,
+      loginWithGoogle,
       register,
       logout,
       accessToken,
       refreshToken,
     }),
-    [accessToken, isAuthenticated, isLoading, login, logout, refreshToken, register, user]
+    [accessToken, isAuthenticated, isLoading, login, loginWithGoogle, logout, refreshToken, register, user]
   );
 
   return (
