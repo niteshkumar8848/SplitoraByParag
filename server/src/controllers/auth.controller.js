@@ -255,31 +255,44 @@ const uploadAvatar = async (req, res, next) => {
     const userId = req.user && req.user.userId
     if (!userId) return ApiResponse.error(res, 'Unauthorized', 401)
     if (!req.file) return ApiResponse.error(res, 'No file uploaded', 400)
+    let avatarUrl = null
 
-    const cloudinary = require('../config/cloudinary')
+    const hasCloudinaryConfig = Boolean(
+      process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+    )
 
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'splitora/avatars',
-          public_id: `avatar_${userId}`,
-          overwrite: true,
-          transformation: [
-            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
-            { quality: 'auto', fetch_format: 'auto' }
-          ]
-        },
-        (error, uploaded) => {
-          if (error) reject(error)
-          else resolve(uploaded)
-        }
-      )
-      stream.end(req.file.buffer)
-    })
+    if (hasCloudinaryConfig) {
+      const cloudinary = require('../config/cloudinary')
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'splitora/avatars',
+            public_id: `avatar_${userId}`,
+            overwrite: true,
+            transformation: [
+              { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+              { quality: 'auto', fetch_format: 'auto' }
+            ]
+          },
+          (error, uploaded) => {
+            if (error) reject(error)
+            else resolve(uploaded)
+          }
+        )
+        stream.end(req.file.buffer)
+      })
+      avatarUrl = result.secure_url
+    } else {
+      const mimeType = req.file.mimetype || 'image/jpeg'
+      const base64 = req.file.buffer.toString('base64')
+      avatarUrl = `data:${mimeType};base64,${base64}`
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { avatar: result.secure_url },
+      data: { avatar: avatarUrl },
       select: {
         id: true,
         name: true,
@@ -290,7 +303,7 @@ const uploadAvatar = async (req, res, next) => {
       }
     })
 
-    return ApiResponse.success(res, { user, avatarUrl: result.secure_url }, 'Avatar uploaded successfully')
+    return ApiResponse.success(res, { user, avatarUrl }, 'Avatar uploaded successfully')
   } catch (error) {
     return next(error)
   }

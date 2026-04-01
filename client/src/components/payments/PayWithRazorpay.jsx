@@ -14,9 +14,14 @@ const loadRazorpayScript = () => new Promise((resolve) => {
 
 export default function PayWithRazorpay({ settlement, onSuccess }) {
   const [loading, setLoading] = useState(false)
+  const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID
 
   const handlePay = async () => {
     try {
+      if (!razorpayKey) {
+        toast.error('Razorpay is not configured in frontend env')
+        return
+      }
       setLoading(true)
       const loaded = await loadRazorpayScript()
       if (!loaded) { toast.error('Failed to load payment gateway'); return }
@@ -27,7 +32,7 @@ export default function PayWithRazorpay({ settlement, onSuccess }) {
       if (!order?.orderId) { toast.error('Failed to create payment order'); return }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: razorpayKey,
         amount: order.amount,
         currency: 'INR',
         name: 'Splitora',
@@ -55,7 +60,7 @@ export default function PayWithRazorpay({ settlement, onSuccess }) {
   }
 
   return (
-    <Button size="sm" variant="outline" loading={loading} onClick={handlePay}>
+    <Button size="sm" variant="outline" loading={loading} onClick={handlePay} disabled={!razorpayKey}>
       Pay via UPI
     </Button>
   )

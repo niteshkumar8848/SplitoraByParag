@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState } from "react";
+=======
+import { useCallback, useState } from "react";
+>>>>>>> 29ca58f (SignIn with google added)
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -15,6 +19,7 @@ import {
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import useAuth from "../../hooks/useAuth";
 
 const loginSchema = z.object({
@@ -47,6 +52,17 @@ export default function LoginPage() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const handleGoogleSignIn = useCallback(
+    async (idToken) => {
+      await loginWithGoogle(idToken);
+      navigate("/");
+    },
+    [loginWithGoogle, navigate]
+  );
+
+>>>>>>> 29ca58f (SignIn with google added)
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       <section className="hidden flex-col justify-between bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 p-12 text-white lg:flex">
@@ -136,6 +152,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
+<<<<<<< HEAD
+=======
+          <GoogleSignInButton onCredential={handleGoogleSignIn} />
+
+>>>>>>> 29ca58f (SignIn with google added)
           <p className="mt-5 text-center text-sm text-surface-600">
             New to Splitora?{" "}
             <Link

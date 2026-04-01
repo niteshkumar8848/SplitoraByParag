@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { CheckCircle2, ShieldCheck, Sparkles, Users, Wallet } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 import useAuth from "../../hooks/useAuth";
 
 const registerSchema = z
@@ -23,7 +24,7 @@ const registerSchema = z
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, loginWithGoogle } = useAuth();
   const [submitted, setSubmitted] = useState(false);
 
   const {
@@ -66,6 +67,14 @@ export default function RegisterPage() {
       toast.error(message);
     }
   };
+
+  const handleGoogleSignIn = useCallback(
+    async (idToken) => {
+      await loginWithGoogle(idToken);
+      navigate("/");
+    },
+    [loginWithGoogle, navigate]
+  );
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
@@ -140,6 +149,8 @@ export default function RegisterPage() {
               Create account
             </Button>
           </form>
+
+          <GoogleSignInButton onCredential={handleGoogleSignIn} />
 
           {submitted ? (
             <p className="mt-4 text-sm text-success-600 inline-flex items-center gap-1">

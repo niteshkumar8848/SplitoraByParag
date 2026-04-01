@@ -92,7 +92,9 @@ export default function GroupDetailPage() {
     try {
       await deleteExpenseMutation.mutateAsync(expense.id)
       refetch()
-    } catch {}
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to delete expense')
+    }
   }
 
   const handleGenerateCode = async () => {

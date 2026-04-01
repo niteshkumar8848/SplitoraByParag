@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
         }
 
         setUser(me);
-      } catch (error) {
+      } catch (_error) {
         clearAuth();
       } finally {
         setLoading(false);
