@@ -231,7 +231,7 @@ export default function GroupLedger({ expenses = [], members = [], balances = []
       netDebt: net,
       simplifiedDebts: simplified
     }
-  }, [expenses, members, balances, groupId, groupName, memberMap])
+  }, [expenses, members, memberMap])
 
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase()

@@ -7,10 +7,25 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npm --prefix server run dev",
     "start": "npm --prefix server run start",
-    "client:dev": "npm --prefix client run dev",
+    "setup": "npm --prefix server install && npm --prefix client install",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d postgres",
+    "db:ensure": "sh -c 'if command -v docker >/dev/null 2>&1; then npm run db:up; else echo \"Docker not found. Ensure Postgres is running on localhost:5432\"; fi'",
+    "db:migrate": "npm --prefix server run db:migrate",
+    "db:prepare": "npm run db:migrate && npm run db:seed",
+    "db:seed": "npm --prefix server run db:seed",
+    "dev:local": "npm run db:ensure && npm run db:migrate && concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "dev:alt": "npm run db:ensure && npm run db:migrate && concurrently \"npm run server:dev:alt\" \"npm run client:dev:alt\"",
+    "client:dev": "npm --prefix client run dev -- --host localhost --port 5173",
+    "client:dev:alt": "VITE_API_URL=http://localhost:10002/api VITE_SOCKET_URL=http://localhost:10002 npm --prefix client run dev -- --host localhost --port 5175",
     "client:build": "npm --prefix client run build",
     "server:dev": "npm --prefix server run dev",
+    "server:dev:alt": "PORT=10002 CLIENT_URL=http://localhost:5175 npm --prefix server run dev",
     "server:start": "npm --prefix server run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   },
   "repository": {
     "type": "git",

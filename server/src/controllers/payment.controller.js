@@ -8,8 +8,14 @@ const getRazorpay = () => new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET
 })
 
+const isRazorpayConfigured = () =>
+  Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET)
+
 const createOrder = async (req, res, next) => {
   try {
+    if (!isRazorpayConfigured()) {
+      return ApiResponse.error(res, 'Razorpay is not configured on server', 503)
+    }
     const { settlementId, amount } = req.body
     const userId = req.user.userId
     if (!settlementId || !amount) return ApiResponse.error(res, 'settlementId and amount required', 400)
@@ -30,6 +36,9 @@ const createOrder = async (req, res, next) => {
 
 const verifyPayment = async (req, res, next) => {
   try {
+    if (!isRazorpayConfigured()) {
+      return ApiResponse.error(res, 'Razorpay is not configured on server', 503)
+    }
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, settlementId } = req.body
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) return ApiResponse.error(res, 'Missing payment details', 400)
     const expectedSig = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex')
