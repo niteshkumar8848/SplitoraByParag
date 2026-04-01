@@ -1,11 +1,13 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const { OAuth2Client } = require('google-auth-library')
 const prisma = require('../config/db')
 const ApiResponse = require('../utils/apiResponse')
 
 const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'
 const REFRESH_TOKEN_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000
+const googleOAuthClient = new OAuth2Client()
 
 const createAccessToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN })
@@ -33,6 +35,7 @@ const sanitizeUser = (user) => ({
   name: user.name,
   email: user.email,
   avatar: user.avatar,
+  authProvider: user.authProvider,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt
 })
@@ -96,6 +99,7 @@ const login = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
+        authProvider: true,
         avatar: true,
         passwordHash: true,
         createdAt: true,
@@ -105,6 +109,10 @@ const login = async (req, res, next) => {
 
     if (!user) {
       return ApiResponse.error(res, 'Invalid email or password', 401)
+    }
+
+    if (!user.passwordHash) {
+      return ApiResponse.error(res, 'This account uses Google sign-in. Please continue with Google.', 401)
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
@@ -118,6 +126,106 @@ const login = async (req, res, next) => {
       res,
       { user: sanitizeUser(user), accessToken, refreshToken },
       'Login successful'
+    )
+  } catch (error) {
+    return next(error)
+  }
+}
+
+const loginWithGoogle = async (req, res, next) => {
+  try {
+    const { idToken } = req.body
+    if (!idToken) return ApiResponse.error(res, 'Google ID token is required', 400)
+
+    const googleClientId = process.env.GOOGLE_CLIENT_ID
+    if (!googleClientId) {
+      return ApiResponse.error(res, 'Google sign-in is not configured on the server', 500)
+    }
+
+    let payload = null
+    try {
+      const ticket = await googleOAuthClient.verifyIdToken({
+        idToken,
+        audience: googleClientId
+      })
+      payload = ticket.getPayload()
+    } catch (_error) {
+      return ApiResponse.error(res, 'Invalid Google token', 401)
+    }
+
+    const googleId = String(payload?.sub || '').trim()
+    const email = String(payload?.email || '').trim().toLowerCase()
+    const name = String(payload?.name || '').trim()
+    const avatar = payload?.picture || null
+
+    if (!googleId || !email) {
+      return ApiResponse.error(res, 'Unable to verify Google account details', 401)
+    }
+
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [{ googleId }, { email }]
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        authProvider: true,
+        googleId: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
+
+    if (!user) {
+      const fallbackName = email.split('@')[0] || 'Google User'
+      const generatedPasswordHash = await bcrypt.hash(`google:${googleId}:${Date.now()}`, 10)
+      user = await prisma.user.create({
+        data: {
+          name: name || fallbackName,
+          email,
+          googleId,
+          authProvider: 'google',
+          avatar,
+          passwordHash: generatedPasswordHash
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          authProvider: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      })
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleId,
+          authProvider: 'google',
+          ...(avatar ? { avatar } : {})
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          authProvider: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      })
+    }
+
+    const { accessToken, refreshToken } = await issueTokens(user.id)
+
+    return ApiResponse.success(
+      res,
+      { user: sanitizeUser(user), accessToken, refreshToken },
+      'Google login successful'
     )
   } catch (error) {
     return next(error)
@@ -312,6 +420,7 @@ const uploadAvatar = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  loginWithGoogle,
   refreshToken,
   logout,
   getMe,

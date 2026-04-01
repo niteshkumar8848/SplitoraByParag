@@ -185,6 +185,18 @@ npm run db:migrate
 - Install Docker Desktop, or
 - Run your own PostgreSQL instance on port `5432`.
 
+4. Port already in use (`5173` or `10000`):
+
+- Run the alternate local stack:
+
+```bash
+npm run dev:alt
+```
+
+- This starts:
+  - API on `http://localhost:10002`
+  - Frontend on `http://localhost:5175`
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

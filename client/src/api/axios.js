@@ -1,11 +1,5 @@
 import axios from 'axios'
-<<<<<<< HEAD
 import { API_BASE_URL as BASE_URL } from '../config/api'
-=======
-
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:10000/api'
-
->>>>>>> 29ca58f (SignIn with google added)
 const api = axios.create({ baseURL: BASE_URL, timeout: 60000, headers: { 'Content-Type': 'application/json' } })
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('splitora_token')

@@ -1,13 +1,7 @@
 import { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { useQueryClient } from '@tanstack/react-query'
-<<<<<<< HEAD
 import { API_ORIGIN as SOCKET_URL } from '../config/api'
-=======
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:10000/api'
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api\/?$/, '')
->>>>>>> 29ca58f (SignIn with google added)
 
 export default function useSocket(groupId) {
   const queryClient = useQueryClient()
