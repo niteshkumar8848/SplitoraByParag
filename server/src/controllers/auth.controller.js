@@ -9,6 +9,26 @@ const REFRESH_TOKEN_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const googleOAuthClient = new OAuth2Client()
 
+const normalizeClientId = (value, key) => {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+
+  const withoutKey = raw.replace(new RegExp(`^${key}\\s*=\\s*`, 'i'), '')
+  return withoutKey.replace(/^["']|["']$/g, '').trim()
+}
+
+const hasGoogleAuthColumns = async () => {
+  const rows = await prisma.$queryRaw`
+    SELECT LOWER(column_name) AS column_name
+    FROM information_schema.columns
+    WHERE LOWER(table_name) = LOWER('User')
+      AND LOWER(column_name) IN ('authprovider', 'googleid')
+  `
+
+  const columnNames = new Set(rows.map((row) => row.column_name))
+  return columnNames.has('authprovider') && columnNames.has('googleid')
+}
+
 const createAccessToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN })
 
@@ -35,7 +55,7 @@ const sanitizeUser = (user) => ({
   name: user.name,
   email: user.email,
   avatar: user.avatar,
-  authProvider: user.authProvider,
+  authProvider: user.authProvider || 'local',
   createdAt: user.createdAt,
   updatedAt: user.updatedAt
 })
@@ -67,7 +87,15 @@ const register = async (req, res, next) => {
 
     const passwordHash = await bcrypt.hash(password, 12)
     const user = await prisma.user.create({
-      data: { name: normalizedName, email: normalizedEmail, passwordHash }
+      data: { name: normalizedName, email: normalizedEmail, passwordHash },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true
+      }
     })
 
     const { accessToken, refreshToken } = await issueTokens(user.id)
@@ -99,7 +127,6 @@ const login = async (req, res, next) => {
         id: true,
         name: true,
         email: true,
-        authProvider: true,
         avatar: true,
         passwordHash: true,
         createdAt: true,
@@ -137,9 +164,18 @@ const loginWithGoogle = async (req, res, next) => {
     const { idToken } = req.body
     if (!idToken) return ApiResponse.error(res, 'Google ID token is required', 400)
 
-    const googleClientId = process.env.GOOGLE_CLIENT_ID
+    const googleClientId = normalizeClientId(process.env.GOOGLE_CLIENT_ID, 'GOOGLE_CLIENT_ID')
     if (!googleClientId) {
       return ApiResponse.error(res, 'Google sign-in is not configured on the server', 500)
+    }
+
+    const googleSchemaReady = await hasGoogleAuthColumns()
+    if (!googleSchemaReady) {
+      return ApiResponse.error(
+        res,
+        'Google sign-in is temporarily unavailable. Please run database migrations on the server.',
+        503
+      )
     }
 
     let payload = null

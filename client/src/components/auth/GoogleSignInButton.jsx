@@ -1,9 +1,17 @@
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
+const normalizeGoogleClientId = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const withoutKey = raw.replace(/^VITE_GOOGLE_CLIENT_ID\s*=\s*/i, "");
+  return withoutKey.replace(/^["']|["']$/g, "").trim();
+};
+
 export default function GoogleSignInButton({ onCredential }) {
   const buttonRef = useRef(null);
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId = normalizeGoogleClientId(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   useEffect(() => {
     if (!googleClientId || !buttonRef.current) {
