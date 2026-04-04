@@ -5,9 +5,9 @@ import Spinner from "./Spinner";
 const VARIANT_MAP = {
   primary:
     "bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-card hover:from-primary-700 hover:to-primary-600",
-  secondary: "bg-transparent text-surface-700 hover:bg-surface-100",
+  secondary: "bg-transparent text-surface-700 hover:bg-surface-100 dark:text-surface-200 dark:hover:bg-surface-800",
   danger: "bg-danger-600 text-white hover:bg-danger-700",
-  outline: "border border-surface-300 bg-surface-50 text-surface-700 hover:bg-surface-100",
+  outline: "border border-surface-300 bg-surface-50 text-surface-700 hover:bg-surface-100 dark:border-surface-600 dark:bg-surface-800 dark:text-surface-200 dark:hover:bg-surface-700",
 };
 
 const SIZE_MAP = {

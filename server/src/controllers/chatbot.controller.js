@@ -177,9 +177,8 @@ const executeAction = async (action, userId) => {
       })
       if (!membership) return { error: 'Access denied' }
 
-      const memberIds = params.memberIds && params.memberIds.length > 0
-        ? params.memberIds
-        : [userId]
+      const memberIds =
+        params.memberIds && params.memberIds.length > 0 ? params.memberIds : [userId]
       const amount = Number(params.amount)
       const share = Number((amount / memberIds.length).toFixed(2))
 
@@ -252,16 +251,21 @@ const parseActions = (text) => {
 
 const chat = async (req, res, next) => {
   try {
+    // Guard: API key must be present
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return ApiResponse.error(
+        res,
+        'AI service not configured. Please add ANTHROPIC_API_KEY to environment variables.',
+        503
+      )
+    }
+
     const userId = req.user && req.user.userId
     if (!userId) return ApiResponse.error(res, 'Unauthorized', 401)
 
     const { messages, message } = req.body
     if (!message && (!messages || !messages.length)) {
       return ApiResponse.error(res, 'Message is required', 400)
-    }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return ApiResponse.error(res, 'AI service is not configured', 503)
     }
 
     const user = await prisma.user.findUnique({
@@ -271,7 +275,8 @@ const chat = async (req, res, next) => {
     if (!user) return ApiResponse.error(res, 'User not found', 404)
 
     const conversationHistory = Array.isArray(messages) ? messages : []
-    const userMessage = message || (conversationHistory[conversationHistory.length - 1]?.content ?? '')
+    const userMessage =
+      message || (conversationHistory[conversationHistory.length - 1]?.content ?? '')
 
     const systemWithContext = `${SYSTEM_PROMPT}
 
@@ -287,15 +292,36 @@ Current user context:
       { role: 'user', content: userMessage }
     ]
 
-    // First call — AI decides if it needs to perform an action
-    const initialResponse = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: systemWithContext,
-      messages: apiMessages
-    })
+    let responseText
 
-    let responseText = initialResponse.content[0].text
+    // First call — AI decides if it needs to perform an action
+    try {
+      const initialResponse = await client.messages.create({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1024,
+        system: systemWithContext,
+        messages: apiMessages
+      })
+      responseText = initialResponse.content[0].text
+    } catch (anthropicError) {
+      console.error('Anthropic API error (initial call):', anthropicError.message)
+      if (anthropicError.status === 401) {
+        return ApiResponse.error(
+          res,
+          'Invalid API key. Please check ANTHROPIC_API_KEY configuration.',
+          401
+        )
+      }
+      if (anthropicError.status === 429) {
+        return ApiResponse.error(
+          res,
+          'AI service rate limit reached. Please try again in a moment.',
+          429
+        )
+      }
+      return ApiResponse.error(res, `AI service error: ${anthropicError.message}`, 500)
+    }
+
     const actions = parseActions(responseText)
 
     if (actions.length > 0) {
@@ -316,14 +342,32 @@ Current user context:
         }
       ]
 
-      const finalResponse = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: systemWithContext,
-        messages: followUpMessages
-      })
-
-      responseText = finalResponse.content[0].text
+      try {
+        const finalResponse = await client.messages.create({
+          model: 'claude-sonnet-4-5',
+          max_tokens: 1024,
+          system: systemWithContext,
+          messages: followUpMessages
+        })
+        responseText = finalResponse.content[0].text
+      } catch (anthropicError) {
+        console.error('Anthropic API error (follow-up call):', anthropicError.message)
+        if (anthropicError.status === 401) {
+          return ApiResponse.error(
+            res,
+            'Invalid API key. Please check ANTHROPIC_API_KEY configuration.',
+            401
+          )
+        }
+        if (anthropicError.status === 429) {
+          return ApiResponse.error(
+            res,
+            'AI service rate limit reached. Please try again in a moment.',
+            429
+          )
+        }
+        return ApiResponse.error(res, `AI service error: ${anthropicError.message}`, 500)
+      }
     }
 
     // Strip any leftover action tags from the final response

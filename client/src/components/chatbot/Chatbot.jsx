@@ -96,17 +96,19 @@ export default function Chatbot() {
           timestamp: new Date()
         }
       ])
-    } catch (_err) {
+    } catch (err) {
+      const errorText =
+        err?.response?.data?.message || err?.message || 'Something went wrong. Please try again.'
       setMessages((prev) => [
         ...prev,
         {
           id: `err-${Date.now()}`,
           role: 'assistant',
-          content: '❌ Something went wrong. Please try again.',
+          content: `❌ ${errorText}`,
           timestamp: new Date()
         }
       ])
-      toast.error('Chatbot error. Please try again.')
+      toast.error(errorText)
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +156,7 @@ export default function Chatbot() {
       {isOpen && (
         <div
           id="chatbot-window"
-          className="fixed bottom-24 right-6 z-50 flex flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl transition-all duration-300"
+          className="fixed bottom-24 right-6 z-50 flex flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl transition-all duration-300 dark:border-surface-700 dark:bg-surface-800"
           style={{
             width: '24rem',
             height: isMinimized ? '3.5rem' : '600px',
@@ -200,7 +202,7 @@ export default function Chatbot() {
           {!isMinimized && (
             <>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 dark:bg-surface-800">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -216,7 +218,7 @@ export default function Chatbot() {
                       className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                         msg.role === 'user'
                           ? 'rounded-tr-sm bg-primary-600 text-white'
-                          : 'rounded-tl-sm bg-surface-100 text-surface-900'
+                          : 'rounded-tl-sm bg-surface-100 text-surface-900 dark:bg-surface-700 dark:text-white'
                       }`}
                     >
                       {msg.role === 'assistant' ? (
@@ -252,7 +254,7 @@ export default function Chatbot() {
                     <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
                       <Bot size={13} />
                     </div>
-                    <div className="rounded-2xl rounded-tl-sm bg-surface-100 px-4 py-3">
+                    <div className="rounded-2xl rounded-tl-sm bg-surface-100 px-4 py-3 dark:bg-surface-700">
                       <div className="flex gap-1 items-center h-3">
                         <span className="h-2 w-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="h-2 w-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -269,7 +271,7 @@ export default function Chatbot() {
                       <button
                         key={action.label}
                         onClick={() => sendMessage(action.message)}
-                        className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-left text-xs font-medium text-surface-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                        className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-left text-xs font-medium text-surface-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-surface-600 dark:bg-surface-700 dark:text-surface-200 dark:hover:border-primary-500 dark:hover:bg-primary-900/30 dark:hover:text-primary-300"
                       >
                         {action.label}
                       </button>
@@ -281,8 +283,8 @@ export default function Chatbot() {
               </div>
 
               {/* Input */}
-              <div className="flex-shrink-0 border-t border-surface-200 p-3">
-                <div className="flex items-end gap-2 rounded-xl border border-surface-300 bg-surface-50 px-3 py-2 transition focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100">
+              <div className="flex-shrink-0 border-t border-surface-200 p-3 dark:border-surface-700 dark:bg-surface-800">
+                <div className="flex items-end gap-2 rounded-xl border border-surface-300 bg-surface-50 px-3 py-2 transition focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 dark:border-surface-600 dark:bg-surface-700">
                   <textarea
                     ref={inputRef}
                     id="chatbot-input"
@@ -292,7 +294,7 @@ export default function Chatbot() {
                     placeholder="Ask me anything about your expenses…"
                     rows={1}
                     disabled={isLoading}
-                    className="flex-1 resize-none bg-transparent text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none disabled:opacity-50"
+                    className="flex-1 resize-none bg-transparent text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none disabled:opacity-50 dark:text-white dark:placeholder:text-surface-500"
                     style={{ maxHeight: '80px' }}
                   />
                   <button

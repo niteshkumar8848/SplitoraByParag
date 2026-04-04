@@ -39,7 +39,7 @@ export default function Input({
           type={type}
           className={twMerge(
             clsx(
-              "w-full rounded-xl border bg-surface-50 text-surface-900 placeholder:text-surface-400 transition focus:outline-none focus:ring-2",
+              "w-full rounded-xl border bg-surface-50 text-surface-900 placeholder:text-surface-400 transition focus:outline-none focus:ring-2 dark:bg-surface-800 dark:border-surface-600 dark:text-white dark:placeholder:text-surface-500",
               "h-11 px-3",
               leftIcon && "pl-10",
               rightIcon && "pr-10",
