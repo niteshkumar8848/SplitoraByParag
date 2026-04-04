@@ -203,7 +203,9 @@ export default function GroupDetailPage() {
       {activeTab === 'expenses' && (
         <button
           onClick={() => setIsAddExpenseOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition hover:bg-primary-700 hover:scale-105"
+          className="fixed bottom-6 right-24 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition hover:bg-primary-700 hover:scale-105"
+          aria-label="Add expense"
+          title="Add Expense"
         >
           <Plus size={24} />
         </button>

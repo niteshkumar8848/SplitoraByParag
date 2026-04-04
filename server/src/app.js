@@ -26,6 +26,7 @@ app.use('/api/expenses', require('./routes/expense.routes'))
 app.use('/api/settlements', require('./routes/settlement.routes'))
 app.use('/api/payments', require('./routes/payment.routes'))
 app.use('/api/ai', require('./routes/ai.routes'))
+app.use('/api/chatbot', require('./routes/chatbot.routes'))
 app.use('/api/stats', require('./routes/stats.routes'))
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date(), uptime: process.uptime() }))

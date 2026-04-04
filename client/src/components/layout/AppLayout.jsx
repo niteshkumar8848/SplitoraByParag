@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import Chatbot from "../chatbot/Chatbot";
 import useAuth from "../../hooks/useAuth";
 
 export default function AppLayout({ children }) {
@@ -29,6 +30,9 @@ export default function AppLayout({ children }) {
           <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>
+
+      {/* AI Chatbot — available on every protected page */}
+      <Chatbot />
     </div>
   );
 }
