@@ -1,6 +1,6 @@
 require('dotenv').config()
 const { createServer } = require('http')
-const { execSync } = require('child_process')
+const { exec } = require('child_process')
 const { Server } = require('socket.io')
 const app = require('./app')
 const prisma = require('./config/db')
@@ -20,19 +20,6 @@ if (!process.env.JWT_REFRESH_SECRET) {
   console.warn('⚠️ JWT_REFRESH_SECRET missing. Using development fallback secret.')
 }
 
-// Run database migrations on startup to ensure schema is always in sync
-try {
-  console.log('🔄 Running database migrations...')
-  execSync('npx prisma migrate deploy', {
-    stdio: 'inherit',
-    env: { ...process.env }
-  })
-  console.log('✅ Database migrations applied successfully')
-} catch (err) {
-  console.error('❌ Failed to apply database migrations:', err.message)
-  // Do not exit — DB may still be usable if migrations were already applied
-}
-
 const PORT = parseInt(process.env.PORT, 10) || 10000
 
 const httpServer = createServer(app)
@@ -49,11 +36,32 @@ io.on('connection', (socket) => {
   socket.on('leave-group', (groupId) => socket.leave(`group-${groupId}`))
 })
 
+// Run migrations asynchronously — does not block server startup or health checks
+function runMigrations() {
+  return new Promise((resolve) => {
+    console.log('🔄 Running database migrations...')
+    exec('npx prisma migrate deploy', { env: { ...process.env } }, (err, stdout, stderr) => {
+      if (stdout) console.log(stdout)
+      if (stderr) console.warn(stderr)
+      if (err) {
+        console.error('❌ Migration error (server will still run):', err.message)
+      } else {
+        console.log('✅ Database migrations applied successfully')
+      }
+      resolve()
+    })
+  })
+}
+
 async function startServer() {
+  // Start listening immediately so Render health checks pass
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`)
     console.log(`🌍 Environment: ${process.env.NODE_ENV}`)
   })
+
+  // Run migrations after server is live (non-blocking for health check)
+  await runMigrations()
 
   const connectWithRetry = async () => {
     try {
