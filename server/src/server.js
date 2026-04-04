@@ -1,5 +1,6 @@
 require('dotenv').config()
 const { createServer } = require('http')
+const { execSync } = require('child_process')
 const { Server } = require('socket.io')
 const app = require('./app')
 const prisma = require('./config/db')
@@ -17,6 +18,19 @@ if (!process.env.JWT_SECRET) {
 if (!process.env.JWT_REFRESH_SECRET) {
   process.env.JWT_REFRESH_SECRET = 'dev_jwt_refresh_secret_change_me'
   console.warn('⚠️ JWT_REFRESH_SECRET missing. Using development fallback secret.')
+}
+
+// Run database migrations on startup to ensure schema is always in sync
+try {
+  console.log('🔄 Running database migrations...')
+  execSync('npx prisma migrate deploy', {
+    stdio: 'inherit',
+    env: { ...process.env }
+  })
+  console.log('✅ Database migrations applied successfully')
+} catch (err) {
+  console.error('❌ Failed to apply database migrations:', err.message)
+  // Do not exit — DB may still be usable if migrations were already applied
 }
 
 const PORT = parseInt(process.env.PORT, 10) || 10000
