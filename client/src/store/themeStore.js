@@ -4,7 +4,7 @@ const getInitialTheme = () => {
   if (typeof window === 'undefined') return 'light'
   const stored = localStorage.getItem('splitora_theme')
   if (stored) return stored
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'light' // Default to light mode explicitly
 }
 
 const applyTheme = (theme) => {
