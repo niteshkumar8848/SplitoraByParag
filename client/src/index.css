@@ -44,8 +44,8 @@
 }
 
 .dark body {
-  background-color: #1e1b2e;
-  color: #e2e8f0;
+  background-color: #13111c;
+  color: #f8fafc;
 }
 
 @layer utilities {
