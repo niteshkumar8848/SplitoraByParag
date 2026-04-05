@@ -60,4 +60,76 @@ const getDashboardStats = async (req, res, next) => {
   } catch (err) { return next(err) }
 }
 
-module.exports = { getDashboardStats }
+const getMyTransactions = async (req, res, next) => {
+  try {
+    const userId = req.user.userId
+
+    const expenses = await prisma.expense.findMany({
+      where: {
+        OR: [
+          { paidById: userId },
+          { shares: { some: { userId } } }
+        ]
+      },
+      include: {
+        paidBy: { select: { id: true, name: true, email: true, avatar: true } },
+        group: { select: { id: true, name: true } },
+        shares: {
+          include: {
+            user: { select: { id: true, name: true, avatar: true } }
+          }
+        }
+      },
+      orderBy: { date: 'desc' }
+    })
+
+    const settlements = await prisma.settlement.findMany({
+      where: {
+        OR: [
+          { payerId: userId },
+          { receiverId: userId }
+        ]
+      },
+      include: {
+        payer: { select: { id: true, name: true, avatar: true } },
+        receiver: { select: { id: true, name: true, avatar: true } },
+        group: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const normalizedExpenses = expenses.map(e => ({
+      id: e.id,
+      eventType: 'expense',
+      date: e.date,
+      title: e.title,
+      amount: e.amount,
+      group: e.group,
+      paidBy: e.paidBy,
+      shares: e.shares,
+      category: e.category,
+      splitType: e.splitType
+    }))
+
+    const normalizedSettlements = settlements.map(s => ({
+      id: s.id,
+      eventType: 'settlement',
+      date: s.createdAt,
+      amount: s.amount,
+      group: s.group,
+      payer: s.payer,
+      receiver: s.receiver,
+      status: s.status
+    }))
+
+    const allTransactions = [...normalizedExpenses, ...normalizedSettlements].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    )
+
+    return ApiResponse.success(res, { transactions: allTransactions }, 'Transactions fetched successfully')
+  } catch (err) {
+    return next(err)
+  }
+}
+
+module.exports = { getDashboardStats, getMyTransactions }

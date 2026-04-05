@@ -4,6 +4,7 @@ import {
   CircleDollarSign,
   LayoutDashboard,
   LogOut,
+  ScrollText,
   UserCircle,
   Users,
   X,
@@ -16,6 +17,7 @@ const navItems = [
   { to: "/", label: "Dashboard", Icon: LayoutDashboard },
   { to: "/groups", label: "Groups", Icon: Users },
   { to: "/settlements", label: "Settlements", Icon: ArrowLeftRight },
+  { to: "/transactions", label: "My Transactions", Icon: ScrollText },
   { to: "/profile", label: "Profile", Icon: UserCircle },
 ];
 

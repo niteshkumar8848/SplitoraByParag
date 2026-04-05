@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage'
 import GroupsPage from './pages/GroupsPage'
 import GroupDetailPage from './pages/GroupDetailPage'
 import SettlementsPage from './pages/SettlementsPage'
+import TransactionsPage from './pages/TransactionsPage'
 import ProfilePage from './pages/ProfilePage'
 import JoinGroupPage from './pages/JoinGroupPage'
 
@@ -114,6 +115,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <SettlementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute>
+              <TransactionsPage />
             </ProtectedRoute>
           }
         />
