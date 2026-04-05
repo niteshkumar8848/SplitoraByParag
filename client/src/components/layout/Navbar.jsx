@@ -3,11 +3,11 @@ import ThemeToggle from "../ui/ThemeToggle";
 
 export default function Navbar({ onMenuClick }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-surface-200 bg-surface-50 px-4 md:hidden dark:border-surface-700 dark:bg-surface-900">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 px-4 md:hidden">
       <button
         type="button"
         onClick={onMenuClick}
-        className="rounded-lg p-2 text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-white"
+        className="rounded-lg p-2 text-surface-600 dark:text-slate-300 hover:bg-surface-100 dark:hover:bg-dark-50 hover:text-surface-900 dark:hover:text-white"
         aria-label="Open sidebar"
       >
         <Menu size={20} />
@@ -19,7 +19,7 @@ export default function Navbar({ onMenuClick }) {
         <ThemeToggle />
         <button
           type="button"
-          className="rounded-lg p-2 text-surface-600 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-white"
+          className="rounded-lg p-2 text-surface-600 dark:text-slate-300 hover:bg-surface-100 dark:hover:bg-dark-50 hover:text-surface-900 dark:hover:text-white"
           aria-label="Notifications"
         >
           <Bell size={20} />

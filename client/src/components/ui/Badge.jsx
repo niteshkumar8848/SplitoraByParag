@@ -2,11 +2,11 @@ import clsx from "clsx";
 import { twMerge } from "tailwind-merge";
 
 const VARIANT_MAP = {
-  success: "bg-success-100 text-success-700",
-  warning: "bg-warning-100 text-warning-700",
-  danger: "bg-danger-100 text-danger-700",
-  info: "bg-primary-100 text-primary-700",
-  default: "bg-surface-200 text-surface-700",
+  success: "bg-success-100 dark:bg-success-700/30 text-success-700 dark:text-success-400",
+  warning: "bg-warning-100 dark:bg-warning-700/30 text-warning-700 dark:text-warning-400",
+  danger: "bg-danger-100 dark:bg-danger-700/30 text-danger-700 dark:text-danger-400",
+  info: "bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300",
+  default: "bg-surface-200 dark:bg-dark-50 text-surface-700 dark:text-slate-300",
 };
 
 const SIZE_MAP = {

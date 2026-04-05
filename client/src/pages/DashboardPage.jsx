@@ -23,7 +23,7 @@ const formatCurrency = (value) =>
   }).format(value || 0)
 
 const SkeletonBlock = ({ className }) => (
-  <div className={`animate-pulse rounded-xl bg-surface-200 ${className}`} />
+  <div className={`animate-pulse rounded-xl bg-surface-200 dark:bg-dark-50 ${className}`} />
 )
 
 const extractInviteCode = (text) => {
@@ -129,8 +129,8 @@ function JoinGroupModal({ isOpen, onClose, onJoin }) {
           </form>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-surface-600">{scanStatus || 'Use your camera to scan a Splitora invite QR code.'}</p>
-            <div id={regionIdRef.current} className="min-h-64 rounded-xl border border-surface-200 bg-surface-100 p-2" />
+            <p className="text-sm text-surface-600 dark:text-slate-300">{scanStatus || 'Use your camera to scan a Splitora invite QR code.'}</p>
+            <div id={regionIdRef.current} className="min-h-64 rounded-xl border border-surface-200 dark:border-dark-50 bg-surface-100 dark:bg-dark-50 p-2" />
             {permissionError ? <p className="text-sm text-danger-600">{permissionError}</p> : null}
             {isJoining ? <p className="text-sm text-primary-600">Joining group...</p> : null}
           </div>
@@ -183,10 +183,10 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900">
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
             {greeting}, {user?.name || 'there'}
           </h1>
-          <p className="mt-1 text-sm text-surface-600">
+          <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">
             Here is a quick snapshot of your shared expenses and settlements.
           </p>
         </div>
@@ -211,19 +211,19 @@ export default function DashboardPage() {
         ) : (
           <>
             <Card>
-              <div className="text-sm text-surface-600">Total groups</div>
-              <div className="mt-2 text-2xl font-bold text-surface-900">{totalGroups}</div>
+              <div className="text-sm text-surface-600 dark:text-slate-300">Total groups</div>
+              <div className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">{totalGroups}</div>
             </Card>
             <Card>
-              <div className="text-sm text-surface-600">Expenses this month</div>
-              <div className="mt-2 text-2xl font-bold text-surface-900">{formatCurrency(totalExpensesThisMonth)}</div>
+              <div className="text-sm text-surface-600 dark:text-slate-300">Expenses this month</div>
+              <div className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">{formatCurrency(totalExpensesThisMonth)}</div>
             </Card>
             <Card>
-              <div className="text-sm text-surface-600">You owe</div>
+              <div className="text-sm text-surface-600 dark:text-slate-300">You owe</div>
               <div className="mt-2 text-2xl font-bold text-danger-600">{formatCurrency(totalYouOwe)}</div>
             </Card>
             <Card>
-              <div className="text-sm text-surface-600">Owed to you</div>
+              <div className="text-sm text-surface-600 dark:text-slate-300">Owed to you</div>
               <div className="mt-2 text-2xl font-bold text-success-600">{formatCurrency(totalOwedToYou)}</div>
             </Card>
           </>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-surface-900">Recent groups</h2>
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Recent groups</h2>
             <Badge variant="info" size="sm">Last 3</Badge>
           </div>
           <div className="space-y-3">
@@ -248,8 +248,8 @@ export default function DashboardPage() {
                 <GroupCard key={group.id} {...group} />
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-surface-300 p-6 text-center">
-                <p className="text-sm text-surface-600">No groups yet.</p>
+              <div className="rounded-xl border border-dashed border-surface-300 dark:border-slate-600 p-6 text-center">
+                <p className="text-sm text-surface-600 dark:text-slate-300">No groups yet.</p>
               </div>
             )}
           </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
 
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-surface-900">Recent expenses</h2>
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Recent expenses</h2>
             <Badge variant="default" size="sm">Last 5</Badge>
           </div>
           <div className="space-y-3">
@@ -267,26 +267,26 @@ export default function DashboardPage() {
               ))
             ) : recentExpenses.length ? (
               recentExpenses.map((expense) => (
-                <div key={expense.id} className="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-50 p-3">
+                <div key={expense.id} className="flex items-center justify-between rounded-xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 p-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <Avatar user={expense.paidBy} size="sm" />
-                      <p className="truncate text-sm font-semibold text-surface-900">{expense.title}</p>
+                      <p className="truncate text-sm font-semibold text-surface-900 dark:text-white">{expense.title}</p>
                     </div>
-                    <p className="mt-1 text-xs text-surface-600">
+                    <p className="mt-1 text-xs text-surface-600 dark:text-slate-300">
                       {expense.group?.name || 'Unknown group'} • Paid by {expense.paidBy?.name || 'Unknown'} • {new Date(expense.date || expense.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="ml-3 flex items-center gap-1 text-sm font-semibold text-surface-800">
+                  <div className="ml-3 flex items-center gap-1 text-sm font-semibold text-surface-800 dark:text-slate-100">
                     <ArrowUpRight size={14} className="text-primary-600" />
                     {formatCurrency(expense.amount)}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-surface-300 p-6 text-center">
-                <HandCoins className="mx-auto mb-2 text-surface-400" size={18} />
-                <p className="text-sm text-surface-600">No recent expenses found.</p>
+              <div className="rounded-xl border border-dashed border-surface-300 dark:border-slate-600 p-6 text-center">
+                <HandCoins className="mx-auto mb-2 text-surface-400 dark:text-slate-500" size={18} />
+                <p className="text-sm text-surface-600 dark:text-slate-300">No recent expenses found.</p>
               </div>
             )}
           </div>

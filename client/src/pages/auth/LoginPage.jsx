@@ -58,6 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+      {/* Left — gradient panel, looks great in both modes */}
       <section className="hidden flex-col justify-between bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 p-12 text-white lg:flex">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
@@ -89,13 +90,14 @@ export default function LoginPage() {
         </div>
       </section>
 
-      <section className="flex items-center justify-center bg-surface-100 p-6 sm:p-10">
-        <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-surface-50 p-6 shadow-card sm:p-8">
+      {/* Right — form panel */}
+      <section className="flex items-center justify-center bg-surface-100 dark:bg-dark-200 p-6 sm:p-10">
+        <div className="w-full max-w-md rounded-2xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 p-6 shadow-card sm:p-8">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-surface-900">
+            <h2 className="text-2xl font-bold text-surface-900 dark:text-white">
               Welcome back
             </h2>
-            <p className="mt-1 text-sm text-surface-600">
+            <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">
               Sign in to continue managing your groups.
             </p>
           </div>
@@ -110,7 +112,7 @@ export default function LoginPage() {
             />
 
             <div className="w-full">
-              <label className="mb-1.5 block text-sm font-medium text-surface-700">
+              <label className="mb-1.5 block text-sm font-medium text-surface-700 dark:text-slate-300">
                 Password
               </label>
               <div className="relative">
@@ -118,17 +120,17 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   className={clsx(
-                    "h-11 w-full rounded-xl border bg-surface-50 px-3 pr-10 text-surface-900 placeholder:text-surface-400 transition focus:outline-none focus:ring-2",
+                    "h-11 w-full rounded-xl border bg-surface-50 dark:bg-dark-100 px-3 pr-10 text-surface-900 dark:text-slate-100 placeholder:text-surface-400 dark:placeholder:text-slate-500 transition focus:outline-none focus:ring-2",
                     errors.password
                       ? "border-danger-400 focus:ring-danger-200"
-                      : "border-surface-300 focus:ring-primary-200"
+                      : "border-surface-300 dark:border-dark-50 focus:ring-primary-200"
                   )}
                   {...register("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 dark:text-slate-400 hover:text-surface-700 dark:hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -147,7 +149,7 @@ export default function LoginPage() {
 
           <GoogleSignInButton onCredential={handleGoogleSignIn} />
 
-          <p className="mt-5 text-center text-sm text-surface-600">
+          <p className="mt-5 text-center text-sm text-surface-600 dark:text-slate-300">
             New to Splitora?{" "}
             <Link
               to="/register"

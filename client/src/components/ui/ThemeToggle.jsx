@@ -3,20 +3,33 @@ import useThemeStore from '../../store/themeStore'
 
 export default function ThemeToggle({ className = '' }) {
   const { theme, toggleTheme } = useThemeStore()
+  const isDark = theme === 'dark'
 
   return (
     <button
       onClick={toggleTheme}
-      className={`relative flex h-9 w-9 items-center justify-center rounded-xl border border-surface-200 bg-surface-50 text-surface-600 transition hover:bg-surface-100 hover:text-surface-900 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700 dark:hover:text-white ${className}`}
-      title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`relative flex h-9 w-16 items-center rounded-full border transition-all duration-300 ${
+        isDark
+          ? 'bg-primary-600 border-primary-500'
+          : 'bg-surface-200 border-surface-300'
+      } ${className}`}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
       id="theme-toggle-btn"
     >
-      {theme === 'dark' ? (
-        <Sun size={18} className="text-amber-400" />
-      ) : (
-        <Moon size={18} />
-      )}
+      <span
+        className={`absolute flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md transition-all duration-300 ${
+          isDark ? 'left-8' : 'left-1'
+        }`}
+      >
+        {isDark ? (
+          <Moon size={14} className="text-primary-600" />
+        ) : (
+          <Sun size={14} className="text-amber-500" />
+        )}
+      </span>
+      <Sun size={13} className={`absolute left-2 ${isDark ? 'text-white/40' : 'text-amber-500'}`} />
+      <Moon size={13} className={`absolute right-2 ${isDark ? 'text-white' : 'text-surface-400'}`} />
     </button>
   )
 }

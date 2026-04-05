@@ -4,7 +4,7 @@ import Avatar from "../ui/Avatar";
 export default function GroupMemberList({ members = [] }) {
   if (!members.length) {
     return (
-      <p className="text-sm text-surface-600">No members yet.</p>
+      <p className="text-sm text-surface-600 dark:text-slate-300">No members yet.</p>
     );
   }
 
@@ -16,15 +16,15 @@ export default function GroupMemberList({ members = [] }) {
         return (
           <div
             key={member.userId || member.id}
-            className="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-50 px-3 py-2"
+            className="flex items-center justify-between rounded-xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 px-3 py-2"
           >
             <div className="flex items-center gap-3">
               <Avatar user={user} size="sm" />
               <div>
-                <p className="text-sm font-medium text-surface-900">
+                <p className="text-sm font-medium text-surface-900 dark:text-white">
                   {user?.name || "Unknown"}
                 </p>
-                <p className="text-xs text-surface-500">
+                <p className="text-xs text-surface-500 dark:text-slate-400">
                   {user?.email || ""}
                 </p>
               </div>

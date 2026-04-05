@@ -78,6 +78,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      {/* Left — gradient panel */}
       <section className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 text-white p-12">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
@@ -106,11 +107,12 @@ export default function RegisterPage() {
         </div>
       </section>
 
-      <section className="flex items-center justify-center bg-surface-100 p-6 sm:p-10">
-        <div className="w-full max-w-md rounded-2xl bg-surface-50 p-6 sm:p-8 shadow-card border border-surface-200">
+      {/* Right — form panel */}
+      <section className="flex items-center justify-center bg-surface-100 dark:bg-dark-200 p-6 sm:p-10">
+        <div className="w-full max-w-md rounded-2xl bg-surface-50 dark:bg-dark-100 p-6 sm:p-8 shadow-card border border-surface-200 dark:border-dark-50">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-surface-900">Create your account</h2>
-            <p className="mt-1 text-sm text-surface-600">Join Splitora and start splitting with confidence.</p>
+            <h2 className="text-2xl font-bold text-surface-900 dark:text-white">Create your account</h2>
+            <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">Join Splitora and start splitting with confidence.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -158,7 +160,7 @@ export default function RegisterPage() {
             </p>
           ) : null}
 
-          <p className="mt-5 text-center text-sm text-surface-600">
+          <p className="mt-5 text-center text-sm text-surface-600 dark:text-slate-300">
             Already have an account?{" "}
             <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">
               Log in

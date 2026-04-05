@@ -192,11 +192,11 @@ export default function AddExpenseModal({
           <SplitSuggestionBadge groupId={groupId} expenseTitle={form.title} amount={form.amount} />
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-surface-700">
+            <label className="mb-1.5 block text-sm font-medium text-surface-700 dark:text-slate-300">
               Category
             </label>
             <select
-              className="h-11 w-full rounded-xl border border-surface-300 bg-surface-50 px-3 text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-200"
+              className="h-11 w-full rounded-xl border border-surface-300 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 px-3 text-surface-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-200"
               value={form.category}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, category: e.target.value }))
@@ -220,11 +220,11 @@ export default function AddExpenseModal({
           />
 
           <div className="md:col-span-2">
-            <label className="mb-1.5 block text-sm font-medium text-surface-700">
+            <label className="mb-1.5 block text-sm font-medium text-surface-700 dark:text-slate-300">
               Paid by
             </label>
             <select
-              className="h-11 w-full rounded-xl border border-surface-300 bg-surface-50 px-3 text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-200"
+              className="h-11 w-full rounded-xl border border-surface-300 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 px-3 text-surface-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-200"
               value={form.paidById}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, paidById: e.target.value }))
@@ -241,10 +241,10 @@ export default function AddExpenseModal({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-surface-700">
+          <label className="mb-2 block text-sm font-medium text-surface-700 dark:text-slate-300">
             Split among
           </label>
-          <div className="grid grid-cols-1 gap-2 rounded-2xl border border-surface-200 bg-surface-50 p-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 rounded-2xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 p-3 sm:grid-cols-2">
             {normalizedMembers.map((member) => {
               const checked = form.selectedMemberIds.includes(member.id);
               return (
@@ -252,8 +252,8 @@ export default function AddExpenseModal({
                   key={member.id}
                   className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
                     checked
-                      ? "border-primary-300 bg-primary-50 text-primary-700"
-                      : "border-surface-200 bg-surface-50 text-surface-700 hover:bg-surface-100"
+                      ? "border-primary-300 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300"
+                      : "border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-50 text-surface-700 dark:text-slate-200 hover:bg-surface-100 dark:hover:bg-dark-50"
                   }`}
                 >
                   <input

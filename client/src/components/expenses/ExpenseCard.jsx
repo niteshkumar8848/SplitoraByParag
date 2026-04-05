@@ -47,22 +47,22 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
               <span className="text-lg" aria-hidden="true">
                 {categoryIcon}
               </span>
-              <h3 className="truncate text-base font-semibold text-surface-900">{expense?.title}</h3>
+              <h3 className="truncate text-base font-semibold text-surface-900 dark:text-white">{expense?.title}</h3>
             </div>
 
-            <p className="mt-1 text-sm text-surface-600">
+            <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">
               paid by <span className="font-medium">{expense?.paidBy?.name || "Unknown"}</span> •{" "}
               {format(new Date(expense?.date || expense?.createdAt), "dd MMM yyyy")}
             </p>
           </div>
 
           <div className="text-right">
-            <p className="text-base font-bold text-surface-900">{formatCurrency(expense?.amount)}</p>
+            <p className="text-base font-bold text-surface-900 dark:text-white">{formatCurrency(expense?.amount)}</p>
             <div className="mt-1 flex items-center justify-end gap-2">
               <Badge variant="info" size="sm">
                 {getSplitBadge(expense?.splitType)}
               </Badge>
-              {expanded ? <ChevronUp size={16} className="text-surface-500" /> : <ChevronDown size={16} className="text-surface-500" />}
+              {expanded ? <ChevronUp size={16} className="text-surface-500 dark:text-slate-400" /> : <ChevronDown size={16} className="text-surface-500 dark:text-slate-400" />}
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
         <button
           type="button"
           onClick={() => onEdit?.(expense)}
-          className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 hover:text-primary-700"
+          className="rounded-lg p-2 text-surface-500 dark:text-slate-400 hover:bg-surface-100 dark:hover:bg-dark-50 hover:text-primary-700 dark:hover:text-primary-300"
           aria-label="Edit expense"
         >
           <Pencil size={16} />
@@ -80,7 +80,7 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
         <button
           type="button"
           onClick={() => onDelete?.(expense)}
-          className="rounded-lg p-2 text-surface-500 hover:bg-danger-50 hover:text-danger-700"
+          className="rounded-lg p-2 text-surface-500 dark:text-slate-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 hover:text-danger-700 dark:hover:text-danger-400"
           aria-label="Delete expense"
         >
           <Trash2 size={16} />
@@ -88,17 +88,17 @@ export default function ExpenseCard({ expense, onEdit, onDelete }) {
       </div>
 
       {expanded ? (
-        <div className="mt-4 space-y-2 border-t border-surface-200 pt-3">
+        <div className="mt-4 space-y-2 border-t border-surface-200 dark:border-dark-50 pt-3">
           {shares.map((share) => (
             <div
               key={share.id || `${share.userId}-${share.amount}`}
-              className="flex items-center justify-between rounded-xl bg-surface-100 px-3 py-2"
+              className="flex items-center justify-between rounded-xl bg-surface-100 dark:bg-dark-50 px-3 py-2"
             >
               <div className="inline-flex items-center gap-2">
                 <Avatar user={share.user} size="sm" />
-                <span className="text-sm text-surface-800">{share.user?.name || "Member"}</span>
+                <span className="text-sm text-surface-800 dark:text-slate-200">{share.user?.name || "Member"}</span>
               </div>
-              <span className="text-sm font-semibold text-surface-900">{formatCurrency(share.amount)}</span>
+              <span className="text-sm font-semibold text-surface-900 dark:text-white">{formatCurrency(share.amount)}</span>
             </div>
           ))}
         </div>

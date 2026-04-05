@@ -28,22 +28,22 @@ export default function SettlementCard({ settlement }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2">
           <Avatar user={settlement?.payer} size="sm" />
-          <span className="truncate text-sm font-medium text-surface-900">
+          <span className="truncate text-sm font-medium text-surface-900 dark:text-white">
             {settlement?.payer?.name || "Member"}
           </span>
-          <ArrowRight size={14} className="text-surface-400" />
+          <ArrowRight size={14} className="text-surface-400 dark:text-slate-500" />
           <Avatar user={settlement?.receiver} size="sm" />
-          <span className="truncate text-sm font-medium text-surface-900">
+          <span className="truncate text-sm font-medium text-surface-900 dark:text-white">
             {settlement?.receiver?.name || "Member"}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-primary-700">{formatCurrency(settlement?.amount)}</span>
+          <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">{formatCurrency(settlement?.amount)}</span>
           <Badge variant={badgeVariant} size="sm">
             {status === "completed" ? "Completed" : "Pending"}
           </Badge>
-          <span className="text-xs text-surface-500">{formatDate(settlement?.date || settlement?.createdAt)}</span>
+          <span className="text-xs text-surface-500 dark:text-slate-400">{formatDate(settlement?.date || settlement?.createdAt)}</span>
         </div>
       </div>
     </Card>

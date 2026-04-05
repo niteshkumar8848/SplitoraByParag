@@ -77,14 +77,14 @@ export default function GroupDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-32 animate-pulse rounded-2xl bg-surface-200" />
-        <div className="h-64 animate-pulse rounded-2xl bg-surface-200" />
+        <div className="h-32 animate-pulse rounded-2xl bg-surface-200 dark:bg-dark-50" />
+        <div className="h-64 animate-pulse rounded-2xl bg-surface-200 dark:bg-dark-50" />
       </div>
     )
   }
 
   if (!group) {
-    return <Card><p className="text-sm text-surface-600">Group not found.</p></Card>
+    return <Card><p className="text-sm text-surface-600 dark:text-slate-300">Group not found.</p></Card>
   }
 
   const handleDeleteExpense = async (expense) => {
@@ -119,10 +119,10 @@ export default function GroupDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-surface-900">{group.name}</h1>
+              <h1 className="text-2xl font-bold text-surface-900 dark:text-white">{group.name}</h1>
               <Badge variant="info">{group.category}</Badge>
             </div>
-            {group.description ? <p className="mt-2 text-sm text-surface-600">{group.description}</p> : null}
+            {group.description ? <p className="mt-2 text-sm text-surface-600 dark:text-slate-300">{group.description}</p> : null}
             <div className="mt-4 flex items-center gap-2">
               {members.map((member) => (
                 <Avatar key={member.userId || member.id} user={member.user || member} size="sm" />
@@ -148,7 +148,7 @@ export default function GroupDetailPage() {
       {activeTab === 'expenses' && (
         <div className="space-y-3">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-surface-900">Expenses</h2>
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Expenses</h2>
             <Button leftIcon={<Plus size={16} />} onClick={() => setIsAddExpenseOpen(true)}>
               Add Expense
             </Button>
@@ -158,36 +158,36 @@ export default function GroupDetailPage() {
               <ExpenseCard key={expense.id} expense={expense} onDelete={handleDeleteExpense} />
             ))
           ) : (
-            <Card><p className="text-sm text-surface-600">No expenses yet.</p></Card>
+            <Card><p className="text-sm text-surface-600 dark:text-slate-300">No expenses yet.</p></Card>
           )}
         </div>
       )}
 
       {activeTab === 'balances' && (
         <Card>
-          <h2 className="mb-2 text-lg font-semibold text-surface-900">Balances</h2>
-          <p className="mb-4 text-sm text-surface-600">Total group spending: <span className="font-semibold text-surface-900">{formatCurrency(totalGroupSpending)}</span></p>
+          <h2 className="mb-2 text-lg font-semibold text-surface-900 dark:text-white">Balances</h2>
+          <p className="mb-4 text-sm text-surface-600 dark:text-slate-300">Total group spending: <span className="font-semibold text-surface-900 dark:text-white">{formatCurrency(totalGroupSpending)}</span></p>
           <div className="space-y-2">
             {balances.length ? (
               balances.map((entry) => (
-                <div key={entry.userId} className="flex items-center justify-between rounded-xl border border-surface-200 bg-surface-50 px-3 py-2">
+                <div key={entry.userId} className="flex items-center justify-between rounded-xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-50 px-3 py-2">
                   <div className="inline-flex items-center gap-2">
                     <Avatar user={{ name: entry.name, avatar: entry.avatar }} size="sm" />
-                    <span className="text-sm font-medium text-surface-900">{entry.name}</span>
+                    <span className="text-sm font-medium text-surface-900 dark:text-white">{entry.name}</span>
                   </div>
                   <span className={`text-sm font-semibold ${entry.balance >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
                     {entry.balance >= 0 ? '+' : ''}{formatCurrency(entry.balance)}
                   </span>
                 </div>
               ))
-            ) : <p className="text-sm text-surface-600">No balances yet.</p>}
+            ) : <p className="text-sm text-surface-600 dark:text-slate-300">No balances yet.</p>}
           </div>
         </Card>
       )}
 
       {activeTab === 'settlements' && (
         <Card>
-          <h2 className="mb-4 text-lg font-semibold text-surface-900">Settlement suggestions</h2>
+          <h2 className="mb-4 text-lg font-semibold text-surface-900 dark:text-white">Settlement suggestions</h2>
           <SettlementSuggestions groupId={id} />
         </Card>
       )}
@@ -232,9 +232,9 @@ export default function GroupDetailPage() {
       <Modal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} title="Share Group" size="md">
         <div className="space-y-6">
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500">Group Code</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-slate-400">Group Code</h3>
             {effectiveInviteCode ? (
-              <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-center text-2xl font-bold tracking-widest text-primary-700">
+              <div className="rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-4 py-3 text-center text-2xl font-bold tracking-widest text-primary-700 dark:text-primary-300">
                 {effectiveInviteCode}
               </div>
             ) : (
@@ -257,8 +257,8 @@ export default function GroupDetailPage() {
           {effectiveInviteCode ? (
             <>
               <section className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500">Invite Link</h3>
-                <div className="rounded-lg border border-surface-300 bg-surface-100 p-3 text-xs break-all">{inviteUrl}</div>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-slate-400">Invite Link</h3>
+                <div className="rounded-lg border border-surface-300 dark:border-dark-50 bg-surface-100 dark:bg-dark-50 p-3 text-xs text-surface-700 dark:text-slate-200 break-all">{inviteUrl}</div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
@@ -283,11 +283,11 @@ export default function GroupDetailPage() {
               </section>
 
               <section className="space-y-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500">QR Code</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-slate-400">QR Code</h3>
                 {qrDataUrl ? (
-                  <img src={qrDataUrl} alt="Group invite QR" className="mx-auto h-52 w-52 rounded-xl border border-surface-200 bg-white p-2" />
+                  <img src={qrDataUrl} alt="Group invite QR" className="mx-auto h-52 w-52 rounded-xl border border-surface-200 dark:border-dark-50 bg-white p-2" />
                 ) : (
-                  <p className="text-sm text-surface-500">Generating QR...</p>
+                  <p className="text-sm text-surface-500 dark:text-slate-400">Generating QR...</p>
                 )}
                 <Button
                   variant="outline"

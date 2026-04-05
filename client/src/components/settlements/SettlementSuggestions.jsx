@@ -14,13 +14,13 @@ export default function SettlementSuggestions({ groupId }) {
   const confirmMutation = useConfirmSettlement(groupId)
   const suggestions = data?.data?.suggestions || data?.suggestions || []
 
-  if (isLoading) return <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-200" />)}</div>
+  if (isLoading) return <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-200 dark:bg-dark-50" />)}</div>
 
   if (!suggestions.length) return (
-    <div className="rounded-xl border border-dashed border-surface-300 py-8 text-center">
+    <div className="rounded-xl border border-dashed border-surface-300 dark:border-slate-600 py-8 text-center">
       <p className="text-2xl">🎉</p>
-      <p className="mt-2 text-sm font-medium text-surface-700">All settled up!</p>
-      <p className="text-xs text-surface-500">No pending settlements.</p>
+      <p className="mt-2 text-sm font-medium text-surface-700 dark:text-slate-200">All settled up!</p>
+      <p className="text-xs text-surface-500 dark:text-slate-400">No pending settlements.</p>
     </div>
   )
 
@@ -43,11 +43,11 @@ export default function SettlementSuggestions({ groupId }) {
       {suggestions.map((item, i) => (
         <Card key={`${item.from}-${item.to}-${i}`}>
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <div className="flex items-center gap-2"><Avatar user={item.fromUser} size="sm" /><span className="font-medium text-surface-900">{item.fromUser?.name || 'Member'}</span></div>
-            <ArrowRight size={14} className="text-surface-400" />
-            <div className="flex items-center gap-2"><Avatar user={item.toUser} size="sm" /><span className="font-medium text-surface-900">{item.toUser?.name || 'Member'}</span></div>
-            <span className="text-surface-500">pays</span>
-            <span className="font-bold text-primary-700">{formatCurrency(item.amount)}</span>
+            <div className="flex items-center gap-2"><Avatar user={item.fromUser} size="sm" /><span className="font-medium text-surface-900 dark:text-white">{item.fromUser?.name || 'Member'}</span></div>
+            <ArrowRight size={14} className="text-surface-400 dark:text-slate-500" />
+            <div className="flex items-center gap-2"><Avatar user={item.toUser} size="sm" /><span className="font-medium text-surface-900 dark:text-white">{item.toUser?.name || 'Member'}</span></div>
+            <span className="text-surface-500 dark:text-slate-400">pays</span>
+            <span className="font-bold text-primary-700 dark:text-primary-300">{formatCurrency(item.amount)}</span>
             <div className="ml-auto flex gap-2">
               <Button size="sm" variant="outline" loading={confirmMutation.isPending} onClick={() => handleConfirm(item)}>Mark settled</Button>
               {item.settlementId && <PayWithRazorpay settlement={{ id: item.settlementId, amount: item.amount, payer: item.fromUser, receiver: item.toUser }} onSuccess={() => { toast.success('Payment done!'); refetch() }} />}

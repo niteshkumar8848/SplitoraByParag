@@ -56,7 +56,7 @@ export default function GroupsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-surface-900">My Groups</h1>
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">My Groups</h1>
         <Button leftIcon={<Plus size={16} />} onClick={() => setIsModalOpen(true)}>
           New Group
         </Button>
@@ -65,7 +65,7 @@ export default function GroupsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface-200" />
+            <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface-200 dark:bg-dark-50" />
           ))}
         </div>
       ) : groups.length ? (
@@ -106,9 +106,9 @@ export default function GroupsPage() {
             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
           />
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-surface-700">Category</label>
+            <label className="mb-1.5 block text-sm font-medium text-surface-700 dark:text-slate-300">Category</label>
             <select
-              className="h-11 w-full rounded-xl border border-surface-300 bg-surface-50 px-3 text-surface-900 focus:outline-none focus:ring-2 focus:ring-primary-200"
+              className="h-11 w-full rounded-xl border border-surface-300 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 px-3 text-surface-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-200"
               value={form.category}
               onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
             >

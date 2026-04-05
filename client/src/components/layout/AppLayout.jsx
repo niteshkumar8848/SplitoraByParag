@@ -9,7 +9,7 @@ export default function AppLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-surface-100 dark:bg-surface-900">
+    <div className="min-h-screen bg-surface-100 dark:bg-dark-200">
       <Sidebar user={user} />
 
       <div className="md:pl-64">
@@ -26,7 +26,7 @@ export default function AppLayout({ children }) {
           </>
         ) : null}
 
-        <main className="px-4 py-6 md:px-8 md:py-8">
+        <main className="px-4 py-6 md:px-8 md:py-8 bg-surface-100 dark:bg-dark-200 min-h-screen">
           <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>

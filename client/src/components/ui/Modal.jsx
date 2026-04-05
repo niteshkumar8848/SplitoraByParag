@@ -36,21 +36,21 @@ export default function Modal({ isOpen, onClose, title, size = "md", children })
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/40 p-4 backdrop-blur-sm animate-in fade-in duration-200 dark:bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-surface-900/40 dark:bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onBackdropClick}
       role="dialog"
       aria-modal="true"
     >
       <div
         className={clsx(
-          "relative w-full rounded-2xl bg-surface-50 p-6 shadow-modal animate-in zoom-in-95 duration-200 dark:bg-surface-800",
+          "relative w-full rounded-2xl bg-surface-50 dark:bg-dark-100 border border-surface-200 dark:border-dark-50 p-6 shadow-modal animate-in zoom-in-95 duration-200",
           SIZE_MAP[size] || SIZE_MAP.md
         )}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 text-surface-500 hover:bg-surface-100 hover:text-surface-700 dark:text-surface-400 dark:hover:bg-surface-700 dark:hover:text-surface-200"
+          className="absolute right-4 top-4 rounded-lg p-1 text-surface-500 dark:text-slate-400 hover:bg-surface-100 dark:hover:bg-dark-50 hover:text-surface-700 dark:hover:text-white"
           aria-label="Close modal"
         >
           <X size={18} />

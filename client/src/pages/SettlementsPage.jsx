@@ -21,21 +21,21 @@ const formatCurrency = (value) =>
 function SettlementItem({ settlement }) {
   const status = settlement?.status || "pending";
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-surface-200 bg-surface-50 p-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-100 p-3 text-sm">
       <div className="inline-flex items-center gap-2">
         <Avatar user={settlement.payer} size="sm" />
-        <span className="font-medium text-surface-900">
+        <span className="font-medium text-surface-900 dark:text-white">
           {settlement.payer?.name || "Unknown"}
         </span>
       </div>
-      <ArrowRight size={14} className="text-surface-400" />
+      <ArrowRight size={14} className="text-surface-400 dark:text-slate-500" />
       <div className="inline-flex items-center gap-2">
         <Avatar user={settlement.receiver} size="sm" />
-        <span className="font-medium text-surface-900">
+        <span className="font-medium text-surface-900 dark:text-white">
           {settlement.receiver?.name || "Unknown"}
         </span>
       </div>
-      <span className="font-bold text-primary-700">
+      <span className="font-bold text-primary-700 dark:text-primary-300">
         {formatCurrency(settlement.amount)}
       </span>
       <Badge
@@ -63,14 +63,14 @@ function GroupSettlements({ group, filter }) {
   }, [data, filter]);
 
   if (isLoading) {
-    return <div className="h-12 animate-pulse rounded-xl bg-surface-200" />;
+    return <div className="h-12 animate-pulse rounded-xl bg-surface-200 dark:bg-dark-50" />;
   }
 
   if (!settlements.length) return null;
 
   return (
     <Card>
-      <h2 className="mb-3 text-base font-semibold text-surface-900">
+      <h2 className="mb-3 text-base font-semibold text-surface-900 dark:text-white">
         {group.name}
       </h2>
       <div className="space-y-2">
@@ -105,7 +105,7 @@ export default function SettlementsPage() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface-200" />
+          <div key={i} className="h-32 animate-pulse rounded-2xl bg-surface-200 dark:bg-dark-50" />
         ))}
       </div>
     );
@@ -114,8 +114,8 @@ export default function SettlementsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Settlements</h1>
-        <p className="mt-1 text-sm text-surface-600">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Settlements</h1>
+        <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">
           Track all your settlements across groups.
         </p>
       </div>
@@ -145,7 +145,7 @@ export default function SettlementsPage() {
         </div>
       ) : (
         <Card>
-          <p className="text-sm text-surface-600">
+          <p className="text-sm text-surface-600 dark:text-slate-300">
             No groups found. Create a group to start tracking settlements.
           </p>
         </Card>

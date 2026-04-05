@@ -81,8 +81,8 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">Profile</h1>
-        <p className="mt-1 text-sm text-surface-600">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Profile</h1>
+        <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">
           Manage your account settings.
         </p>
       </div>
@@ -91,12 +91,12 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4">
           <AvatarUpload user={user} size="xl" />
           <div>
-            <h2 className="text-lg font-semibold text-surface-900">
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
               {user?.name}
             </h2>
-            <p className="text-sm text-surface-600">{user?.email}</p>
+            <p className="text-sm text-surface-600 dark:text-slate-300">{user?.email}</p>
             {user?.createdAt && (
-              <p className="mt-1 text-xs text-surface-400">
+              <p className="mt-1 text-xs text-surface-400 dark:text-slate-500">
                 Member since{" "}
                 {format(new Date(user.createdAt), "dd MMM yyyy")}
               </p>
@@ -108,7 +108,7 @@ export default function ProfilePage() {
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <User size={18} className="text-primary-600" />
-          <h2 className="text-base font-semibold text-surface-900">
+          <h2 className="text-base font-semibold text-surface-900 dark:text-white">
             Edit profile
           </h2>
         </div>
@@ -133,7 +133,7 @@ export default function ProfilePage() {
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <Lock size={18} className="text-primary-600" />
-          <h2 className="text-base font-semibold text-surface-900">
+          <h2 className="text-base font-semibold text-surface-900 dark:text-white">
             Security
           </h2>
         </div>
@@ -145,13 +145,13 @@ export default function ProfilePage() {
         </Button>
       </Card>
 
-      <Card className="border-danger-200/70">
+      <Card className="border-danger-200/70 dark:border-danger-700/30">
         <div className="space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-danger-600">
+            <h2 className="text-base font-semibold text-danger-600 dark:text-danger-400">
               Danger zone
             </h2>
-            <p className="mt-1 text-sm text-surface-600">
+            <p className="mt-1 text-sm text-surface-600 dark:text-slate-300">
               This will sign you out of your current session.
             </p>
           </div>

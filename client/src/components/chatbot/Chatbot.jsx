@@ -81,7 +81,6 @@ export default function Chatbot() {
       const history = getConversationHistory()
       const response = await sendChatMessage(text, history)
 
-      // response.data.message is the AI reply (ApiResponse wraps in .data)
       const replyText =
         response?.data?.message ||
         response?.message ||
@@ -156,7 +155,7 @@ export default function Chatbot() {
       {isOpen && (
         <div
           id="chatbot-window"
-          className="fixed bottom-24 right-6 z-50 flex flex-col rounded-2xl border border-surface-200 bg-white shadow-2xl transition-all duration-300 dark:border-surface-700 dark:bg-surface-800"
+          className="fixed bottom-24 right-6 z-50 flex flex-col rounded-2xl border border-surface-200 dark:border-dark-50 bg-white dark:bg-dark-100 shadow-2xl transition-all duration-300"
           style={{
             width: '24rem',
             height: isMinimized ? '3.5rem' : '600px',
@@ -202,14 +201,14 @@ export default function Chatbot() {
           {!isMinimized && (
             <>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 dark:bg-surface-800">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white dark:bg-dark-100">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
                     className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                      <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-600">
                         <Bot size={13} />
                       </div>
                     )}
@@ -218,11 +217,11 @@ export default function Chatbot() {
                       className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                         msg.role === 'user'
                           ? 'rounded-tr-sm bg-primary-600 text-white'
-                          : 'rounded-tl-sm bg-surface-100 text-surface-900 dark:bg-surface-700 dark:text-white'
+                          : 'rounded-tl-sm bg-surface-100 dark:bg-dark-50 text-surface-900 dark:text-slate-100'
                       }`}
                     >
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm max-w-none prose-p:my-0.5 prose-ul:my-0.5 prose-li:my-0 prose-strong:text-surface-900">
+                        <div className="prose prose-sm max-w-none prose-p:my-0.5 prose-ul:my-0.5 prose-li:my-0 prose-strong:text-surface-900 dark:prose-strong:text-white dark:prose-p:text-slate-100 dark:prose-li:text-slate-100">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                       ) : (
@@ -230,7 +229,7 @@ export default function Chatbot() {
                       )}
                       <p
                         className={`mt-1 text-[10px] ${
-                          msg.role === 'user' ? 'text-primary-200' : 'text-surface-400'
+                          msg.role === 'user' ? 'text-primary-200' : 'text-surface-400 dark:text-slate-500'
                         }`}
                       >
                         {msg.timestamp.toLocaleTimeString('en-IN', {
@@ -241,7 +240,7 @@ export default function Chatbot() {
                     </div>
 
                     {msg.role === 'user' && (
-                      <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-surface-200 text-surface-600">
+                      <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-surface-200 dark:bg-dark-50 text-surface-600 dark:text-slate-300">
                         <User size={13} />
                       </div>
                     )}
@@ -251,10 +250,10 @@ export default function Chatbot() {
                 {/* Typing indicator */}
                 {isLoading && (
                   <div className="flex gap-2 justify-start">
-                    <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                    <div className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-600">
                       <Bot size={13} />
                     </div>
-                    <div className="rounded-2xl rounded-tl-sm bg-surface-100 px-4 py-3 dark:bg-surface-700">
+                    <div className="rounded-2xl rounded-tl-sm bg-surface-100 dark:bg-dark-50 px-4 py-3">
                       <div className="flex gap-1 items-center h-3">
                         <span className="h-2 w-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="h-2 w-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -271,7 +270,7 @@ export default function Chatbot() {
                       <button
                         key={action.label}
                         onClick={() => sendMessage(action.message)}
-                        className="rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-left text-xs font-medium text-surface-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-surface-600 dark:bg-surface-700 dark:text-surface-200 dark:hover:border-primary-500 dark:hover:bg-primary-900/30 dark:hover:text-primary-300"
+                        className="rounded-xl border border-surface-200 dark:border-dark-50 bg-surface-50 dark:bg-dark-50 px-3 py-2 text-left text-xs font-medium text-surface-700 dark:text-slate-200 transition hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-700 dark:hover:text-primary-300"
                       >
                         {action.label}
                       </button>
@@ -283,8 +282,8 @@ export default function Chatbot() {
               </div>
 
               {/* Input */}
-              <div className="flex-shrink-0 border-t border-surface-200 p-3 dark:border-surface-700 dark:bg-surface-800">
-                <div className="flex items-end gap-2 rounded-xl border border-surface-300 bg-surface-50 px-3 py-2 transition focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 dark:border-surface-600 dark:bg-surface-700">
+              <div className="flex-shrink-0 border-t border-surface-200 dark:border-dark-50 p-3 bg-white dark:bg-dark-100">
+                <div className="flex items-end gap-2 rounded-xl border border-surface-300 dark:border-dark-50 bg-surface-50 dark:bg-dark-50 px-3 py-2 transition focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 dark:focus-within:ring-primary-800">
                   <textarea
                     ref={inputRef}
                     id="chatbot-input"
@@ -294,7 +293,7 @@ export default function Chatbot() {
                     placeholder="Ask me anything about your expenses…"
                     rows={1}
                     disabled={isLoading}
-                    className="flex-1 resize-none bg-transparent text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none disabled:opacity-50 dark:text-white dark:placeholder:text-surface-500"
+                    className="flex-1 resize-none bg-transparent text-sm text-surface-900 dark:text-slate-100 placeholder:text-surface-400 dark:placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
                     style={{ maxHeight: '80px' }}
                   />
                   <button
@@ -310,7 +309,7 @@ export default function Chatbot() {
                     )}
                   </button>
                 </div>
-                <p className="mt-1.5 text-center text-[10px] text-surface-400">
+                <p className="mt-1.5 text-center text-[10px] text-surface-400 dark:text-slate-500">
                   Powered by Claude · Enter to send, Shift+Enter for new line
                 </p>
               </div>
